@@ -98,7 +98,8 @@ app.get("/api/matches", (_req, res) => {
   res.json(rows.map((m) => ({ ...m, current: m.id === current })));
 });
 
-// Detalhe de uma partida com seus palpites (PÚBLICO — sem dados de contato)
+// Detalhe de uma partida (PÚBLICO). Os palpites de terceiros não expõem placar
+// nem respostas — apenas participante e pontos — para ninguém copiar.
 app.get("/api/matches/:id", (req, res) => {
   const match = parseMatch(
     db.prepare("SELECT * FROM matches WHERE id = ?").get(req.params.id)
@@ -106,10 +107,9 @@ app.get("/api/matches/:id", (req, res) => {
   if (!match) return res.status(404).json({ error: "Partida não encontrada." });
   const predictions = db
     .prepare(
-      "SELECT id, participant, home_score, away_score, answers, points, created_at FROM predictions WHERE match_id = ? ORDER BY points DESC, datetime(created_at) ASC"
+      "SELECT id, participant, points, created_at FROM predictions WHERE match_id = ? ORDER BY points DESC, datetime(created_at) ASC"
     )
-    .all(match.id)
-    .map(parsePred);
+    .all(match.id);
   res.json({ ...match, predictions });
 });
 

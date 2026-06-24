@@ -34,12 +34,10 @@
     <div id="panel" hidden>
       <section class="card">
         <h2 class="card-title">🏆 Premiação e textos</h2>
-        <label class="field"><span>Subtítulo da página</span><input id="cfgSubtitle" placeholder="Acerte o placar, crave o marcador..." /></label>
+        <label class="field"><span>Subtítulo da página</span><input id="cfgSubtitle" placeholder="Acerte o placar, crave os detalhes..." /></label>
         <div id="prizeEditor"></div>
         <button class="btn-ghost mini" id="addPrizeBtn" type="button">+ Adicionar lugar</button>
-        <div style="margin-top:14px;">
-          <button class="btn-gold mini" id="saveCfgBtn">💾 Salvar premiação</button>
-        </div>
+        <div style="margin-top:14px;"><button class="btn-gold mini" id="saveCfgBtn">💾 Salvar premiação</button></div>
         <p class="form-msg" id="cfgMsg"></p>
       </section>
 
@@ -47,27 +45,26 @@
         <h2 class="card-title">➕ Nova partida</h2>
         <div class="admin-grid">
           <label class="field"><span>Time mandante</span><input id="nHome" placeholder="Brasil" /></label>
-          <label class="field"><span>Bandeira mandante (emoji ou URL)</span><input id="nHomeFlag" placeholder="https://flagcdn.com/w320/br.png" /></label>
+          <label class="field"><span>Bandeira mandante (URL ou emoji)</span><input id="nHomeFlag" placeholder="https://flagcdn.com/w320/br.png" /></label>
           <label class="field"><span>Time visitante</span><input id="nAway" placeholder="Escócia" /></label>
-          <label class="field"><span>Bandeira visitante (emoji ou URL)</span><input id="nAwayFlag" placeholder="https://flagcdn.com/w320/gb-sct.png" /></label>
+          <label class="field"><span>Bandeira visitante (URL ou emoji)</span><input id="nAwayFlag" placeholder="https://flagcdn.com/w320/gb-sct.png" /></label>
           <label class="field"><span>Data e hora do jogo</span><input id="nDate" type="datetime-local" /></label>
           <label class="field"><span>Encerrar palpites em</span><input id="nLock" type="datetime-local" /></label>
           <label class="field"><span>Local (opcional)</span><input id="nVenue" placeholder="Hard Rock Stadium · Miami" /></label>
         </div>
-        <label class="field"><span>Perguntas especiais (opcional · JSON)</span>
-          <textarea id="nQuestions" class="json-area" rows="6" placeholder='[{"id":"scorers","type":"players","label":"Quem marca gol?","points":3,"max":3}]'></textarea>
-        </label>
+        <p class="hint-text">As perguntas especiais e o resultado são configurados na partida, logo abaixo, depois de criada.</p>
         <button class="btn-gold" id="createBtn">Criar partida</button>
         <p class="form-msg" id="createMsg"></p>
       </section>
 
       <section class="card">
-        <h2 class="card-title">🗂 Partidas cadastradas</h2>
+        <h2 class="card-title">🗂 Partidas</h2>
         <div id="adminMatches"></div>
       </section>
     </div>
   </main>
 
+  <script src="players.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>

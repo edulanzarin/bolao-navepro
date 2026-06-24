@@ -343,13 +343,12 @@ async function renderRanking() {
   if (rankingMode === "match") {
     const preds = (currentDetail && currentDetail.predictions) || [];
     wrap.innerHTML = `<table class="ranking-table">
-      <thead><tr><th>Pos</th><th>Participante</th><th>Placar</th><th>Pts</th></tr></thead>
+      <thead><tr><th>Pos</th><th>Participante</th><th>Pts</th></tr></thead>
       <tbody>${preds.length ? preds.map((p, i) => `<tr>
         <td class="pos">${MEDALS[i] ? `<span class="rank-medal">${MEDALS[i]}</span>` : i + 1 + "º"}</td>
         <td>${escapeHTML(p.participant)}</td>
-        <td><strong>${p.home_score} x ${p.away_score}</strong></td>
         <td class="pts">${p.points}</td>
-      </tr>`).join("") : `<tr><td colspan="4" class="empty">Ainda sem palpites para este jogo.</td></tr>`}</tbody>
+      </tr>`).join("") : `<tr><td colspan="3" class="empty">Ainda sem palpites para este jogo.</td></tr>`}</tbody>
     </table>`;
   } else {
     const rows = await api("/api/ranking");
