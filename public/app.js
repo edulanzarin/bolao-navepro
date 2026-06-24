@@ -9,7 +9,12 @@ let rankingMode = "geral";
 let lockTime = null;
 let kickoffTime = null;
 
-const MEDALS = ["🥇", "🥈", "🥉", "🏅", "🎖️"];
+const ICONS = {
+  trophy: '<svg class="ic" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
+  medal: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.48 12.89 17 22l-5-3-5 3 1.52-9.11"/></svg>',
+  check: '<svg class="ic" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+};
+const icon = (n) => ICONS[n] || "";
 
 const fmtFull = (iso) => {
   if (!iso) return "A definir";
@@ -91,9 +96,9 @@ function renderQuestions(m) {
     let body = "";
     if (q.type === "players") {
       const n = q.max || 3;
-      body = `<div class="q-players">${Array.from({ length: n }).map((_, i) =>
+      body = `<div class="q-players">${Array.from({ length: n }).map(() =>
         `<div class="select-wrap"><select class="q-player" data-qid="${q.id}">
-          <option value="">— jogador ${i + 1} (opcional) —</option>${squadOptions()}
+          <option value="">Selecionar jogador</option>${squadOptions()}
         </select></div>`).join("")}</div>`;
     } else if (q.type === "number") {
       body = `<div class="sb-stepper q-number">
@@ -172,7 +177,7 @@ function validateStep1() {
   if ($("#phone").value.replace(/\D/g, "").length < 10) return fail("Informe um telefone válido com DDD.");
   if (!EMAIL_RE.test($("#email").value.trim())) return fail("Informe um e-mail válido.");
   return true;
-  function fail(t) { msg.textContent = "⚠ " + t; msg.classList.add("err"); return false; }
+  function fail(t) { msg.textContent = t; msg.classList.add("err"); return false; }
 }
 
 function renderReview() {
@@ -214,8 +219,8 @@ async function renderConfig() {
     const cfg = await api("/api/config");
     if (cfg.subtitle) $("#heroSub").textContent = cfg.subtitle;
     const prizes = (cfg.prizes || []).slice().sort((a, b) => a.place - b.place);
-    $("#prizes").innerHTML = prizes.map((p, i) => `<li class="prize">
-      <span class="medal">${MEDALS[i] || "🏆"}</span>
+    $("#prizes").innerHTML = prizes.map((p) => `<li class="prize">
+      <span class="medal">${icon("medal")}</span>
       <span class="place">${p.place}º lugar</span>
       <span class="reward">${escapeHTML(p.prize)}</span>
     </li>`).join("");
@@ -253,9 +258,9 @@ function tickCountdown() {
   if (diff <= 0) {
     cd.classList.add("ended");
     if (kickoffTime && Date.now() < kickoffTime) {
-      label.textContent = "⏳ Palpites encerrados · o jogo começa em";
+      label.textContent = "Palpites encerrados · o jogo começa em";
       diff = kickoffTime - Date.now();
-    } else { label.textContent = "⏱️ Palpites encerrados"; setUnits(0, 0, 0, 0); return; }
+    } else { label.textContent = "Palpites encerrados"; setUnits(0, 0, 0, 0); return; }
   } else { cd.classList.remove("ended"); label.textContent = "Tempo para encerrar os palpites"; }
   const s = Math.floor(diff / 1000);
   setUnits(Math.floor(s / 86400), Math.floor((s % 86400) / 3600), Math.floor((s % 3600) / 60), s % 60);
@@ -335,9 +340,10 @@ async function renderRanking() {
   const banner = $("#resultBanner");
   if (currentDetail && currentDetail.home_score !== null && currentDetail.home_score !== undefined) {
     const officialScorers = (currentDetail.answers && currentDetail.answers.scorers) || [];
-    let txt = `✅ Resultado oficial: ${currentDetail.home_team} ${currentDetail.home_score} x ${currentDetail.away_score} ${currentDetail.away_team}`;
+    let txt = `Resultado oficial: ${currentDetail.home_team} ${currentDetail.home_score} x ${currentDetail.away_score} ${currentDetail.away_team}`;
     if (officialScorers.length) txt += ` · Marcadores: ${officialScorers.join(", ")}`;
-    banner.textContent = txt; banner.hidden = false;
+    banner.innerHTML = `${icon("check")}<span>${escapeHTML(txt)}</span>`;
+    banner.hidden = false;
   } else banner.hidden = true;
 
   if (rankingMode === "match") {
@@ -345,7 +351,7 @@ async function renderRanking() {
     wrap.innerHTML = `<table class="ranking-table">
       <thead><tr><th>Pos</th><th>Participante</th><th>Pts</th></tr></thead>
       <tbody>${preds.length ? preds.map((p, i) => `<tr>
-        <td class="pos">${MEDALS[i] ? `<span class="rank-medal">${MEDALS[i]}</span>` : i + 1 + "º"}</td>
+        <td class="pos">${i + 1}º</td>
         <td>${escapeHTML(p.participant)}</td>
         <td class="pts">${p.points}</td>
       </tr>`).join("") : `<tr><td colspan="3" class="empty">Ainda sem palpites para este jogo.</td></tr>`}</tbody>
@@ -355,7 +361,7 @@ async function renderRanking() {
     wrap.innerHTML = `<table class="ranking-table">
       <thead><tr><th>Pos</th><th>Participante</th><th>Pts</th></tr></thead>
       <tbody>${rows.length ? rows.map((r, i) => `<tr>
-        <td class="pos">${MEDALS[i] ? `<span class="rank-medal">${MEDALS[i]}</span>` : i + 1 + "º"}</td>
+        <td class="pos">${i + 1}º</td>
         <td>${escapeHTML(r.participant)}</td>
         <td class="pts">${r.points ?? 0}</td>
       </tr>`).join("") : `<tr><td colspan="3" class="empty">Nenhum palpite ainda. Seja o primeiro!</td></tr>`}</tbody>
@@ -396,7 +402,7 @@ $("#palpiteForm").addEventListener("submit", async (e) => {
         answers: collectAnswers(m),
       }),
     });
-    msg.textContent = "✅ Palpite enviado! Boa sorte 🍀";
+    msg.textContent = "Palpite enviado! Boa sorte.";
     msg.classList.add("ok");
     await renderMatch();
     await renderRanking();
@@ -408,7 +414,7 @@ $("#palpiteForm").addEventListener("submit", async (e) => {
       showStep(1);
     }, 4500);
   } catch (err) {
-    msg.textContent = "⚠ " + err.message;
+    msg.textContent = err.message;
     msg.classList.add("err");
   }
 });

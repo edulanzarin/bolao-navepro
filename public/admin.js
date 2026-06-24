@@ -18,6 +18,19 @@ function escapeHTML(s) {
 
 const toLocalInput = (iso) => (iso ? String(iso).slice(0, 16) : "");
 const toBrasiliaISO = (v) => (v ? v.slice(0, 16) + ":00-03:00" : null);
+
+// download de CSV mantendo a senha no header (fora da URL)
+async function downloadCsv(path, filename) {
+  try {
+    const res = await fetch(path, { headers: { "x-admin-password": PASS } });
+    if (!res.ok) throw new Error("Falha ao exportar.");
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) { alert("Erro ao exportar: " + e.message); }
+}
 function fmtDoc(d) {
   d = String(d || "");
   if (d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
@@ -56,7 +69,7 @@ $("#loginBtn").addEventListener("click", async () => {
   const msg = $("#loginMsg");
   msg.className = "form-msg";
   if (await tryLogin(pass)) { sessionStorage.setItem("adminPass", pass); enterPanel(); }
-  else { msg.textContent = "⚠ Senha incorreta."; msg.classList.add("err"); }
+  else { msg.textContent = "Senha incorreta."; msg.classList.add("err"); }
 });
 
 /* ----------------------- PREMIAÇÃO ----------------------- */
@@ -83,13 +96,14 @@ async function loadConfig() {
   } catch {}
 }
 $("#addPrizeBtn").addEventListener("click", () => $("#prizeEditor").appendChild(prizeRow($("#prizeEditor").children.length + 1, "")));
+$("#exportRankingBtn").addEventListener("click", () => downloadCsv("/api/admin/export/ranking", "ranking-geral.csv"));
 $("#saveCfgBtn").addEventListener("click", async () => {
   const msg = $("#cfgMsg"); msg.className = "form-msg";
   const prizes = [...document.querySelectorAll(".prize-input")].map((inp, i) => ({ place: i + 1, prize: inp.value.trim() })).filter((p) => p.prize);
   try {
     await api("/api/admin/config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subtitle: $("#cfgSubtitle").value.trim(), prizes }) });
-    msg.textContent = "✅ Premiação salva!"; msg.classList.add("ok");
-  } catch (e) { msg.textContent = "⚠ " + e.message; msg.classList.add("err"); }
+    msg.textContent = "Premiação salva!"; msg.classList.add("ok");
+  } catch (e) { msg.textContent = e.message; msg.classList.add("err"); }
 });
 
 /* ----------------------- NOVA PARTIDA ----------------------- */
@@ -105,10 +119,10 @@ $("#createBtn").addEventListener("click", async () => {
         venue: $("#nVenue").value || null,
       }),
     });
-    msg.textContent = "✅ Partida criada! Configure as perguntas logo abaixo."; msg.classList.add("ok");
+    msg.textContent = "Partida criada! Configure as perguntas logo abaixo."; msg.classList.add("ok");
     ["nHome", "nAway", "nHomeFlag", "nAwayFlag", "nDate", "nLock", "nVenue"].forEach((id) => ($("#" + id).value = ""));
     loadMatches();
-  } catch (e) { msg.textContent = "⚠ " + e.message; msg.classList.add("err"); }
+  } catch (e) { msg.textContent = e.message; msg.classList.add("err"); }
 });
 
 /* ----------------------- CONSTRUTOR DE PERGUNTAS ----------------------- */
@@ -241,7 +255,7 @@ async function loadMatches() {
 
     card.innerHTML = `
       <div class="admin-match-head">
-        <strong>${escapeHTML(m.home_team)} x ${escapeHTML(m.away_team)} ${m.current ? '<span class="badge badge-open">★ jogo atual</span>' : ''}</strong>
+        <strong>${escapeHTML(m.home_team)} x ${escapeHTML(m.away_team)} ${m.current ? '<span class="badge badge-open">jogo atual</span>' : ''}</strong>
         <span class="badge badge-${m.status}">${statusLabel(m.status)}</span>
       </div>
 
@@ -250,7 +264,7 @@ async function loadMatches() {
         <label class="field mini grow"><span>Data e hora</span><input type="datetime-local" id="md-${m.id}" value="${toLocalInput(m.match_date)}" /></label>
         <label class="field mini grow"><span>Encerrar palpites em</span><input type="datetime-local" id="ml-${m.id}" value="${toLocalInput(m.lock_at)}" /></label>
         <label class="field mini grow"><span>Local</span><input type="text" id="mv-${m.id}" value="${escapeHTML(m.venue || "")}" placeholder="Estádio · Cidade" /></label>
-        <button class="btn-ghost mini" data-act="savemeta" data-id="${m.id}" style="align-self:flex-end;">💾 Salvar dados</button>
+        <button class="btn-ghost mini" data-act="savemeta" data-id="${m.id}" style="align-self:flex-end;">Salvar dados</button>
       </div>
       <p class="hint-text">Os palpites encerram sozinhos no horário acima — não precisa travar na mão.</p>
 
@@ -258,7 +272,7 @@ async function loadMatches() {
       <div id="qbuilder-${m.id}" class="qbuilder"></div>
       <div class="qbuilder-actions">
         <button class="btn-ghost mini" data-act="addq" data-id="${m.id}">+ Adicionar pergunta</button>
-        <button class="btn-gold mini" data-act="saveq" data-id="${m.id}">💾 Salvar perguntas</button>
+        <button class="btn-gold mini" data-act="saveq" data-id="${m.id}">Salvar perguntas</button>
       </div>
 
       <p class="block-label">Resultado oficial</p>
@@ -270,11 +284,12 @@ async function loadMatches() {
         ${(detail.questions || []).map((q) => answerField(m.id, q, detail.answers)).join("") || '<span class="hint-text">Nenhuma pergunta especial nesta partida.</span>'}
       </div>
       <div class="admin-actions">
-        <button class="btn-gold mini" data-act="save-result" data-id="${m.id}">💾 Salvar resultado</button>
+        <button class="btn-gold mini" data-act="save-result" data-id="${m.id}">Salvar resultado</button>
         ${m.status === "finished"
-          ? `<button class="btn-ghost" data-act="reopen" data-id="${m.id}">↩ Reabrir jogo</button>`
-          : `<button class="btn-ghost" data-act="finish" data-id="${m.id}">🏁 Encerrar e publicar</button>`}
-        <button class="btn-ghost danger" data-act="delete" data-id="${m.id}">🗑 Excluir partida</button>
+          ? `<button class="btn-ghost" data-act="reopen" data-id="${m.id}">Reabrir jogo</button>`
+          : `<button class="btn-ghost" data-act="finish" data-id="${m.id}">Encerrar e publicar</button>`}
+        <button class="btn-ghost" data-act="export" data-id="${m.id}">Exportar palpites</button>
+        <button class="btn-ghost danger" data-act="delete" data-id="${m.id}">Excluir partida</button>
       </div>
       <p class="hint-text">"Salvar resultado" recalcula a pontuação na hora. "Encerrar" finaliza o jogo e o site avança para o próximo.</p>
 
@@ -319,6 +334,10 @@ async function handleAction(act, id) {
       const qbox = document.getElementById("qbuilder-" + id);
       if (qbox.querySelector(".hint-text")) qbox.innerHTML = "";
       qbox.appendChild(makeQEditor({}));
+      return;
+    }
+    if (act === "export") {
+      await downloadCsv(`/api/admin/export/matches/${id}`, `palpites-jogo-${id}.csv`);
       return;
     }
     if (act === "saveq") {

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Bolão NAVEPRO · Copa 2026</title>
-  <meta name="description" content="Bolão de palpites NAVEPRO Corretora de Seguros — Copa do Mundo 2026" />
+  <meta name="description" content="Bolão de palpites NAVEPRO Assessoria e Seguros — Copa do Mundo 2026" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -15,10 +15,13 @@
 
   <header class="topbar">
     <div class="brand">
+      <img class="brand-logo" src="assets/logo.png" alt="NAVEPRO" hidden
+        onload="this.hidden=false; this.parentElement.querySelector('.brand-mark').hidden=true; this.parentElement.querySelector('.brand-text').hidden=true;"
+        onerror="if(!this.dataset.f){this.dataset.f=1;this.src='assets/logo.webp';}else{this.remove();}" />
       <span class="brand-mark">▲▼</span>
       <div class="brand-text">
         <strong>NAVEPRO</strong>
-        <small>CORRETORA DE SEGUROS</small>
+        <small>ASSESSORIA E SEGUROS</small>
       </div>
     </div>
     <a class="btn-pill" href="#palpite">Participar</a>
@@ -28,10 +31,10 @@
     <!-- HERO -->
     <section class="hero container">
       <div class="hero-left">
-        <p class="kicker">🏆 COPA DO MUNDO 2026</p>
+        <p class="kicker"><svg class="ic ic-inline" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>COPA DO MUNDO 2026</p>
         <h1 class="hero-title">BOLÃO<br /><span class="accent-gold">NAVE</span><span class="accent-blue">PRO</span></h1>
         <p class="hero-sub" id="heroSub">Acerte o placar, crave o marcador e suba no ranking.</p>
-        <p class="hero-note">⚡ 1 palpite por participante (por CPF/CNPJ) · <span id="lockNote">encerra 10 min antes do jogo</span></p>
+        <p class="hero-note"><svg class="ic ic-inline" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>1 palpite por participante (por CPF/CNPJ) · <span id="lockNote">encerra 10 min antes do jogo</span></p>
 
         <div class="countdown" id="countdown" aria-live="polite">
           <p class="countdown-label" id="countdownLabel">Tempo para encerrar os palpites</p>
@@ -54,7 +57,8 @@
       <!-- Símbolo da Copa · troque public/assets/copa.svg pelo ícone da FIFA/Copa -->
       <aside class="hero-art" aria-hidden="true">
         <div class="art-glow"></div>
-        <img class="fifa-trophy" src="assets/copa.svg" alt="Copa do Mundo 2026" />
+        <img class="fifa-trophy" src="assets/copa.webp" alt="Copa do Mundo 2026"
+          onerror="this.onerror=null; this.src='assets/copa.svg';" />
       </aside>
     </section>
 
@@ -87,7 +91,7 @@
           <span class="status-chip" id="statusChip">Palpites abertos</span>
         </div>
 
-        <div id="lockedNotice" class="locked-notice" hidden>🔒 Os palpites para esta partida estão encerrados.</div>
+        <div id="lockedNotice" class="locked-notice" hidden><svg class="ic ic-inline" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Os palpites para esta partida estão encerrados.</div>
 
         <form id="palpiteForm" novalidate>
           <!-- progresso -->
@@ -173,12 +177,12 @@
             <div class="review" id="review"></div>
             <div class="wnav">
               <button type="button" class="btn-ghost wbtn" data-prev>← Voltar</button>
-              <button type="submit" class="btn-gold wbtn" id="submitBtn">🏆 Enviar meu palpite</button>
+              <button type="submit" class="btn-gold wbtn" id="submitBtn">Enviar meu palpite</button>
             </div>
           </div>
 
           <p class="form-msg" id="formMsg"></p>
-          <p class="form-hint">⚠ Confira tudo antes de enviar: o palpite é <strong>único por CPF/CNPJ</strong> e <strong>não pode ser alterado</strong> depois de enviado.</p>
+          <p class="form-hint">Confira tudo antes de enviar: o palpite é <strong>único por CPF/CNPJ</strong> e <strong>não pode ser alterado</strong> depois de enviado.</p>
         </form>
       </div>
     </section>
@@ -218,9 +222,8 @@
   <footer class="footer">
     <div class="brand center">
       <span class="brand-mark">▲▼</span>
-      <div class="brand-text"><strong>NAVEPRO</strong><small>CORRETORA DE SEGUROS</small></div>
+      <div class="brand-text"><strong>NAVEPRO</strong><small>ASSESSORIA E SEGUROS</small></div>
     </div>
-    <span>Seguros que trazem tranquilidade para você focar no que realmente importa.</span>
     <a class="admin-link" href="admin.html">Área do organizador</a>
   </footer>
 

@@ -335,6 +335,70 @@ app.delete("/api/admin/predictions/:id", requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
+/* ------------------------------ exportações (CSV) ------------------------------ */
+
+const csvCell = (v) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+const csvLine = (cells) => cells.map(csvCell).join(";");
+
+function sendCsv(res, filename, rows) {
+  const body = "\uFEFF" + rows.map(csvLine).join("\r\n"); // BOM p/ acentos no Excel
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.send(body);
+}
+
+function docLabel(doc, type) {
+  const d = String(doc || "");
+  if (type === "cpf" && d.length === 11) return d.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.$2.$3-$4");
+  if (type === "cnpj" && d.length === 14) return d.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, "$1.$2.$3/$4-$5");
+  return d;
+}
+
+// Ranking geral com dados de contato (para premiação)
+app.get("/api/admin/export/ranking", requireAdmin, (_req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT p.participant, p.document, p.doc_type, p.email, p.phone, t.points, t.palpites
+       FROM (
+         SELECT document, SUM(points) AS points, COUNT(*) AS palpites, MAX(id) AS last_id
+         FROM predictions GROUP BY document
+       ) t
+       JOIN predictions p ON p.id = t.last_id
+       ORDER BY t.points DESC, p.created_at ASC`
+    )
+    .all();
+  const out = [["Posição", "Participante", "CPF/CNPJ", "E-mail", "Telefone", "Pontos", "Palpites"]];
+  rows.forEach((r, i) =>
+    out.push([i + 1, r.participant, docLabel(r.document, r.doc_type), r.email, r.phone, r.points, r.palpites])
+  );
+  sendCsv(res, "ranking-geral.csv", out);
+});
+
+// Palpites de uma partida (com respostas e contato)
+app.get("/api/admin/export/matches/:id", requireAdmin, (req, res) => {
+  const match = parseMatch(db.prepare("SELECT * FROM matches WHERE id = ?").get(req.params.id));
+  if (!match) return res.status(404).json({ error: "Partida não encontrada." });
+  const preds = db
+    .prepare("SELECT * FROM predictions WHERE match_id = ? ORDER BY points DESC, datetime(created_at) ASC")
+    .all(match.id)
+    .map(parsePred);
+
+  const header = ["Posição", "Participante", "CPF/CNPJ", "E-mail", "Telefone", "Placar", ...match.questions.map((q) => q.label), "Pontos"];
+  const out = [header];
+  preds.forEach((p, i) => {
+    const answers = match.questions.map((q) => {
+      const v = p.answers ? p.answers[q.id] : undefined;
+      return Array.isArray(v) ? v.join(", ") : v ?? "";
+    });
+    out.push([
+      i + 1, p.participant, docLabel(p.document, p.doc_type), p.email, p.phone,
+      `${p.home_score} x ${p.away_score}`, ...answers, p.points,
+    ]);
+  });
+  const slug = `${match.home_team}-${match.away_team}`.toLowerCase().replace(/[^a-z0-9]+/g, "-");
+  sendCsv(res, `palpites-${slug}.csv`, out);
+});
+
 // Healthcheck (útil pro container/orquestrador)
 app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
 

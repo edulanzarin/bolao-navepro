@@ -50,6 +50,7 @@ h1, h2, h3, .hero-title, .section-title { font-family: "Sora", sans-serif; }
   padding: 18px 26px; max-width: 1180px; margin: 0 auto;
 }
 .brand { display: flex; align-items: center; gap: 12px; }
+.brand-logo { height: 40px; width: auto; display: block; }
 .brand.center { flex-direction: column; gap: 6px; }
 .brand-mark { font-size: 20px; color: var(--gold); letter-spacing: -4px; font-weight: 900; }
 .brand-text strong { display: block; font-size: 18px; letter-spacing: 3px; }
@@ -126,7 +127,8 @@ h1, h2, h3, .hero-title, .section-title { font-family: "Sora", sans-serif; }
   transition: 0.2s;
 }
 .prize:hover { border-color: var(--line-strong); background: rgba(255,255,255,0.05); }
-.prize .medal { font-size: 18px; width: 26px; text-align: center; }
+.prize .medal { display: inline-flex; align-items: center; justify-content: center; width: 26px; color: var(--gold); }
+.prize .medal .ic { width: 22px; height: 22px; }
 .prize .place { font-weight: 600; flex: 1; font-size: 14px; }
 .prize .reward { font-weight: 700; color: var(--gold-soft); font-size: 14px; }
 
@@ -302,8 +304,12 @@ h1, h2, h3, .hero-title, .section-title { font-family: "Sora", sans-serif; }
 .result-banner {
   background: rgba(74,222,128,0.10); border: 1px solid rgba(74,222,128,0.3);
   color: #7ee2a3; padding: 12px 14px; border-radius: 11px; margin-bottom: 16px;
-  font-weight: 600; text-align: center;
+  font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 10px;
 }
+.result-banner .ic { flex: none; }
+
+.ic { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ic-inline { vertical-align: -0.18em; margin-right: 7px; color: var(--gold); }
 
 /* ---------- STEPS / REGRAS ---------- */
 .steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }

@@ -12,6 +12,9 @@
 
   <header class="topbar">
     <div class="brand">
+      <img class="brand-logo" src="assets/logo.png" alt="NAVEPRO" hidden
+        onload="this.hidden=false; this.parentElement.querySelector('.brand-mark').hidden=true; this.parentElement.querySelector('.brand-text').hidden=true;"
+        onerror="if(!this.dataset.f){this.dataset.f=1;this.src='assets/logo.webp';}else{this.remove();}" />
       <span class="brand-mark">▲▼</span>
       <div class="brand-text"><strong>NAVEPRO</strong><small>ÁREA DO ORGANIZADOR</small></div>
     </div>
@@ -21,7 +24,7 @@
   <main class="container" style="padding-top: 20px; padding-bottom: 60px;">
     <!-- LOGIN -->
     <section class="card" id="loginCard" style="max-width:420px;margin:40px auto;">
-      <h2 class="card-title">🔐 Acesso do organizador</h2>
+      <h2 class="card-title">Acesso do organizador</h2>
       <label class="field">
         <span>Senha de administrador</span>
         <input type="password" id="adminPass" placeholder="••••••••" />
@@ -33,16 +36,16 @@
     <!-- PAINEL -->
     <div id="panel" hidden>
       <section class="card">
-        <h2 class="card-title">🏆 Premiação e textos</h2>
+        <h2 class="card-title">Premiação e textos</h2>
         <label class="field"><span>Subtítulo da página</span><input id="cfgSubtitle" placeholder="Acerte o placar, crave os detalhes..." /></label>
         <div id="prizeEditor"></div>
         <button class="btn-ghost mini" id="addPrizeBtn" type="button">+ Adicionar lugar</button>
-        <div style="margin-top:14px;"><button class="btn-gold mini" id="saveCfgBtn">💾 Salvar premiação</button></div>
+        <div style="margin-top:14px;"><button class="btn-gold mini" id="saveCfgBtn">Salvar premiação</button></div>
         <p class="form-msg" id="cfgMsg"></p>
       </section>
 
       <section class="card">
-        <h2 class="card-title">➕ Nova partida</h2>
+        <h2 class="card-title">Nova partida</h2>
         <div class="admin-grid">
           <label class="field"><span>Time mandante</span><input id="nHome" placeholder="Brasil" /></label>
           <label class="field"><span>Bandeira mandante (URL ou emoji)</span><input id="nHomeFlag" placeholder="https://flagcdn.com/w320/br.png" /></label>
@@ -58,7 +61,13 @@
       </section>
 
       <section class="card">
-        <h2 class="card-title">🗂 Partidas</h2>
+        <h2 class="card-title">Exportar para premiação</h2>
+        <p class="hint-text">Baixe a planilha (CSV, abre no Excel) com o ranking e os contatos dos participantes.</p>
+        <button class="btn-gold mini" id="exportRankingBtn">Exportar ranking geral</button>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">Partidas</h2>
         <div id="adminMatches"></div>
       </section>
     </div>
