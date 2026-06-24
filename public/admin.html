@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Organizador · Bolão NAVEPRO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">▲▼</span>
+      <div class="brand-text"><strong>NAVEPRO</strong><small>ÁREA DO ORGANIZADOR</small></div>
+    </div>
+    <a class="admin-link" href="index.html">← Voltar ao bolão</a>
+  </header>
+
+  <main class="container" style="padding-top: 20px; padding-bottom: 60px;">
+    <!-- LOGIN -->
+    <section class="card" id="loginCard" style="max-width:420px;margin:40px auto;">
+      <h2 class="card-title">🔐 Acesso do organizador</h2>
+      <label class="field">
+        <span>Senha de administrador</span>
+        <input type="password" id="adminPass" placeholder="••••••••" />
+      </label>
+      <button class="btn-gold" id="loginBtn">Entrar</button>
+      <p class="form-msg" id="loginMsg"></p>
+    </section>
+
+    <!-- PAINEL -->
+    <div id="panel" hidden>
+      <section class="card">
+        <h2 class="card-title">🏆 Premiação e textos</h2>
+        <label class="field"><span>Subtítulo da página</span><input id="cfgSubtitle" placeholder="Acerte o placar, crave o marcador..." /></label>
+        <div id="prizeEditor"></div>
+        <button class="btn-ghost mini" id="addPrizeBtn" type="button">+ Adicionar lugar</button>
+        <div style="margin-top:14px;">
+          <button class="btn-gold mini" id="saveCfgBtn">💾 Salvar premiação</button>
+        </div>
+        <p class="form-msg" id="cfgMsg"></p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">➕ Nova partida</h2>
+        <div class="admin-grid">
+          <label class="field"><span>Time mandante</span><input id="nHome" placeholder="Brasil" /></label>
+          <label class="field"><span>Bandeira mandante (emoji ou URL)</span><input id="nHomeFlag" placeholder="https://flagcdn.com/w320/br.png" /></label>
+          <label class="field"><span>Time visitante</span><input id="nAway" placeholder="Escócia" /></label>
+          <label class="field"><span>Bandeira visitante (emoji ou URL)</span><input id="nAwayFlag" placeholder="https://flagcdn.com/w320/gb-sct.png" /></label>
+          <label class="field"><span>Data e hora do jogo</span><input id="nDate" type="datetime-local" /></label>
+          <label class="field"><span>Encerrar palpites em</span><input id="nLock" type="datetime-local" /></label>
+          <label class="field"><span>Local (opcional)</span><input id="nVenue" placeholder="Hard Rock Stadium · Miami" /></label>
+        </div>
+        <label class="field"><span>Perguntas especiais (opcional · JSON)</span>
+          <textarea id="nQuestions" class="json-area" rows="6" placeholder='[{"id":"scorers","type":"players","label":"Quem marca gol?","points":3,"max":3}]'></textarea>
+        </label>
+        <button class="btn-gold" id="createBtn">Criar partida</button>
+        <p class="form-msg" id="createMsg"></p>
+      </section>
+
+      <section class="card">
+        <h2 class="card-title">🗂 Partidas cadastradas</h2>
+        <div id="adminMatches"></div>
+      </section>
+    </div>
+  </main>
+
+  <script src="admin.js"></script>
+</body>
+</html>

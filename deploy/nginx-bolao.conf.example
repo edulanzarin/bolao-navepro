@@ -1,0 +1,22 @@
+# Exemplo de reverse proxy para expor o bolão em https://bolao.SEUDOMINIO.com.br
+# Coloque em /etc/nginx/sites-available/ e crie o symlink em sites-enabled.
+#
+# O certificado SSL pode ser gerado com:
+#   sudo certbot --nginx -d bolao.SEUDOMINIO.com.br
+
+server {
+    listen 80;
+    server_name bolao.SEUDOMINIO.com.br;
+
+    # Redireciona tudo para HTTPS (após configurar o certbot)
+    # return 301 https://$host$request_uri;
+
+    location / {
+        proxy_pass         http://127.0.0.1:3000;
+        proxy_http_version 1.1;
+        proxy_set_header   Host              $host;
+        proxy_set_header   X-Real-IP         $remote_addr;
+        proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header   X-Forwarded-Proto $scheme;
+    }
+}

@@ -1,0 +1,19 @@
+services:
+  bolao:
+    build: .
+    image: bolao-navepro:latest
+    container_name: bolao-navepro
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      # Senha do painel do organizador (TROQUE em produção!)
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-navepro2026}
+      DATA_DIR: /app/data
+      TZ: America/Sao_Paulo
+    volumes:
+      # Persiste o banco SQLite fora do container
+      - bolao-data:/app/data
+
+volumes:
+  bolao-data:

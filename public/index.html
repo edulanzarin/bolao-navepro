@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Bolão NAVEPRO · Copa 2026</title>
+  <meta name="description" content="Bolão de palpites NAVEPRO Corretora de Seguros — Copa do Mundo 2026" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="grid-bg"></div>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">▲▼</span>
+      <div class="brand-text">
+        <strong>NAVEPRO</strong>
+        <small>CORRETORA DE SEGUROS</small>
+      </div>
+    </div>
+    <a class="btn-pill" href="#palpite">Participar</a>
+  </header>
+
+  <main>
+    <!-- HERO -->
+    <section class="hero container">
+      <div class="hero-left">
+        <p class="kicker">🏆 COPA DO MUNDO 2026</p>
+        <h1 class="hero-title">BOLÃO<br /><span class="accent-gold">NAVE</span><span class="accent-blue">PRO</span></h1>
+        <p class="hero-sub" id="heroSub">Acerte o placar, crave o marcador e suba no ranking.</p>
+        <p class="hero-note">⚡ 1 palpite por participante (por CPF/CNPJ) · <span id="lockNote">encerra 10 min antes do jogo</span></p>
+
+        <div class="countdown" id="countdown" aria-live="polite">
+          <p class="countdown-label" id="countdownLabel">Tempo para encerrar os palpites</p>
+          <div class="countdown-units">
+            <div class="cd-unit"><strong id="cdDays">00</strong><span>dias</span></div>
+            <i>:</i>
+            <div class="cd-unit"><strong id="cdHours">00</strong><span>horas</span></div>
+            <i>:</i>
+            <div class="cd-unit"><strong id="cdMin">00</strong><span>min</span></div>
+            <i>:</i>
+            <div class="cd-unit"><strong id="cdSec">00</strong><span>seg</span></div>
+          </div>
+        </div>
+
+        <ul class="prizes" id="prizes"></ul>
+
+        <a class="btn-gold hero-cta" href="#palpite">Fazer meu palpite</a>
+      </div>
+
+      <!-- Símbolo da Copa -->
+      <aside class="hero-art" aria-hidden="true">
+        <div class="art-glow"></div>
+        <svg class="fifa-trophy" viewBox="0 0 220 320" role="img">
+          <defs>
+            <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#f7e69a" />
+              <stop offset="0.5" stop-color="#d8b14a" />
+              <stop offset="1" stop-color="#9c7320" />
+            </linearGradient>
+          </defs>
+          <circle cx="110" cy="72" r="42" fill="url(#gold)" />
+          <ellipse cx="110" cy="72" rx="42" ry="16" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="2.5" />
+          <path d="M110 30 a42 42 0 0 0 0 84" fill="none" stroke="rgba(0,0,0,0.18)" stroke-width="2.5" />
+          <path d="M84 106 C 68 152 80 176 94 196 C 80 212 78 234 93 252 L127 252 C142 234 140 212 126 196 C140 176 152 152 136 106 C126 124 94 124 84 106 Z" fill="url(#gold)" />
+          <rect x="74" y="252" width="72" height="16" rx="5" fill="url(#gold)" />
+          <rect x="64" y="270" width="92" height="22" rx="7" fill="url(#gold)" />
+        </svg>
+      </aside>
+    </section>
+
+    <!-- TABS -->
+    <div class="container"><div class="match-tabs" id="matchTabs"></div></div>
+
+    <!-- COMO PONTUAR -->
+    <section class="container section">
+      <p class="section-kicker">PONTUAÇÃO</p>
+      <h2 class="section-title">Como <span class="accent-blue">pontuar</span></h2>
+      <div class="tiers" id="tiers"></div>
+    </section>
+
+    <!-- PALPITE (onboarding em etapas) -->
+    <section class="container section" id="palpite">
+      <p class="section-kicker">FAÇA SEU PALPITE</p>
+      <h2 class="section-title">Seu <span class="accent-gold">palpite</span></h2>
+
+      <div class="card palpite-card">
+        <div class="match-head">
+          <div class="match-head-info">
+            <span class="mh-kicker" id="mhKicker">COPA DO MUNDO 2026</span>
+            <span class="mh-title">
+              <span class="mh-flag" id="mhHomeFlag"></span>
+              <span id="mhTitle">Brasil x Escócia</span>
+              <span class="mh-flag" id="mhAwayFlag"></span>
+            </span>
+            <span class="mh-meta" id="mhMeta"></span>
+          </div>
+          <span class="status-chip" id="statusChip">Palpites abertos</span>
+        </div>
+
+        <div id="lockedNotice" class="locked-notice" hidden>🔒 Os palpites para esta partida estão encerrados.</div>
+
+        <form id="palpiteForm" novalidate>
+          <!-- progresso -->
+          <div class="wizard-progress" id="wizardProgress">
+            <span class="wp-seg active" data-seg="1"></span>
+            <span class="wp-seg" data-seg="2"></span>
+            <span class="wp-seg" data-seg="3"></span>
+            <span class="wp-seg" data-seg="4"></span>
+          </div>
+
+          <!-- PASSO 1 · dados -->
+          <div class="wstep active" data-step="1">
+            <p class="wstep-label">PASSO 1 DE 4 · <strong>Seus dados</strong></p>
+            <div class="field-row">
+              <label class="field">
+                <span>Nome completo</span>
+                <input type="text" id="participant" placeholder="Ex: João da Silva Souza" maxlength="80" autocomplete="name" required />
+              </label>
+              <label class="field">
+                <span>CPF ou CNPJ <small>(identifica seu palpite)</small></span>
+                <input type="text" id="document" placeholder="000.000.000-00" maxlength="18" inputmode="numeric" required />
+              </label>
+            </div>
+            <div class="field-row">
+              <label class="field">
+                <span>Telefone (WhatsApp)</span>
+                <input type="tel" id="phone" placeholder="(54) 99999-9999" maxlength="20" autocomplete="tel" required />
+              </label>
+              <label class="field">
+                <span>E-mail</span>
+                <input type="email" id="email" placeholder="voce@empresa.com.br" maxlength="80" autocomplete="email" required />
+              </label>
+            </div>
+            <div class="wnav">
+              <span></span>
+              <button type="button" class="btn-gold wbtn" data-next>Próximo passo →</button>
+            </div>
+          </div>
+
+          <!-- PASSO 2 · placar -->
+          <div class="wstep" data-step="2">
+            <p class="wstep-label">PASSO 2 DE 4 · <strong>O placar</strong></p>
+            <div class="scoreboard">
+              <div class="sb-team">
+                <div class="flag" id="homeFlag"></div>
+                <span id="homeName">BRASIL</span>
+              </div>
+              <div class="sb-stepper">
+                <button type="button" class="step-btn" data-step="up" data-target="homeScore">+</button>
+                <input type="text" inputmode="numeric" id="homeScore" class="score-display" value="0" readonly />
+                <button type="button" class="step-btn" data-step="down" data-target="homeScore">−</button>
+              </div>
+              <span class="sb-x">×</span>
+              <div class="sb-stepper">
+                <button type="button" class="step-btn" data-step="up" data-target="awayScore">+</button>
+                <input type="text" inputmode="numeric" id="awayScore" class="score-display" value="0" readonly />
+                <button type="button" class="step-btn" data-step="down" data-target="awayScore">−</button>
+              </div>
+              <div class="sb-team">
+                <div class="flag" id="awayFlag"></div>
+                <span id="awayName">ESCÓCIA</span>
+              </div>
+            </div>
+            <div class="wnav">
+              <button type="button" class="btn-ghost wbtn" data-prev>← Voltar</button>
+              <button type="button" class="btn-gold wbtn" data-next>Próximo →</button>
+            </div>
+          </div>
+
+          <!-- PASSO 3 · perguntas especiais -->
+          <div class="wstep" data-step="3">
+            <p class="wstep-label">PASSO 3 DE 4 · <strong>Perguntas especiais</strong> <small id="qHint"></small></p>
+            <div id="questionsBox" class="questions-box"></div>
+            <div class="wnav">
+              <button type="button" class="btn-ghost wbtn" data-prev>← Voltar</button>
+              <button type="button" class="btn-gold wbtn" data-next>Revisar →</button>
+            </div>
+          </div>
+
+          <!-- PASSO 4 · revisão -->
+          <div class="wstep" data-step="4">
+            <p class="wstep-label">PASSO 4 DE 4 · <strong>Confirme e envie</strong></p>
+            <div class="review" id="review"></div>
+            <div class="wnav">
+              <button type="button" class="btn-ghost wbtn" data-prev>← Voltar</button>
+              <button type="submit" class="btn-gold wbtn" id="submitBtn">🏆 Enviar meu palpite</button>
+            </div>
+          </div>
+
+          <p class="form-msg" id="formMsg"></p>
+          <p class="form-hint">⚠ Confira tudo antes de enviar: o palpite é <strong>único por CPF/CNPJ</strong> e <strong>não pode ser alterado</strong> depois de enviado.</p>
+        </form>
+      </div>
+    </section>
+
+    <!-- RANKING -->
+    <section class="container section" id="ranking">
+      <p class="section-kicker">CLASSIFICAÇÃO</p>
+      <h2 class="section-title">Ranking <span class="accent-blue">ao vivo</span></h2>
+
+      <div class="card">
+        <div class="ranking-toolbar">
+          <div class="segmented">
+            <button class="seg-btn active" data-mode="geral">Ranking geral</button>
+            <button class="seg-btn" data-mode="match">Este jogo</button>
+          </div>
+          <span class="live-dot">ao vivo</span>
+        </div>
+        <div class="result-banner" id="resultBanner" hidden></div>
+        <div id="rankingWrap"></div>
+        <p class="ranking-foot" id="rulesFoot"></p>
+      </div>
+    </section>
+
+    <!-- REGRAS -->
+    <section class="container section">
+      <p class="section-kicker">COMO FUNCIONA</p>
+      <h2 class="section-title">Regras do <span class="accent-gold">bolão</span></h2>
+      <div class="steps">
+        <div class="step"><span class="step-n">1</span><strong>Cadastre-se</strong><p>Nome, CPF/CNPJ, telefone e e-mail. O CPF/CNPJ garante 1 palpite por pessoa.</p></div>
+        <div class="step"><span class="step-n">2</span><strong>Faça seu palpite</strong><p>Crave o placar e, se quiser, quem marca gol. 1 palpite por jogo.</p></div>
+        <div class="step"><span class="step-n">3</span><strong>Prazo</strong><p>Os palpites encerram automaticamente antes do apito inicial.</p></div>
+        <div class="step"><span class="step-n">4</span><strong>Ganhe prêmios</strong><p>Os primeiros do ranking levam a premiação. Empate? Vence quem palpitou antes.</p></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="brand center">
+      <span class="brand-mark">▲▼</span>
+      <div class="brand-text"><strong>NAVEPRO</strong><small>CORRETORA DE SEGUROS</small></div>
+    </div>
+    <span>Seguros que trazem tranquilidade para você focar no que realmente importa.</span>
+    <a class="admin-link" href="admin.html">Área do organizador</a>
+  </footer>
+
+  <script src="validators.js"></script>
+  <script src="players.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
