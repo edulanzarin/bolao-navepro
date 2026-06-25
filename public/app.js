@@ -7,6 +7,7 @@ let currentDetail = null;
 let userPinned = false;
 let rankingMode = "geral";
 let activeCategory = "brazil";
+let liveEnabled = false;
 let lockTime = null;
 let kickoffTime = null;
 
@@ -61,6 +62,13 @@ function isClosed(m) {
   if (m.status !== "open") return true;
   const t = matchLockMs(m);
   return t !== null && Date.now() >= t;
+}
+function isLive(m) {
+  if (!m || m.status === "finished") return false;
+  const k = m.match_date ? new Date(m.match_date).getTime() : 0;
+  if (!k) return false;
+  const now = Date.now();
+  return now >= k && now < k + 3 * 3600000; // do apito até ~3h depois
 }
 
 /* ---------- steppers (delegação: vale para placar e perguntas) ---------- */
@@ -281,6 +289,7 @@ function setupWizard() {
 async function renderConfig() {
   try {
     const cfg = await api("/api/config");
+    liveEnabled = !!cfg.live;
     if (cfg.subtitle) $("#heroSub").textContent = cfg.subtitle;
     const prizes = (cfg.prizes || []).slice().sort((a, b) => a.place - b.place);
     $("#prizes").innerHTML = prizes.map((p) => `<li class="prize">
@@ -407,6 +416,7 @@ async function renderMatch() {
 
   const chip = $("#statusChip");
   if (m.status === "finished") { chip.textContent = "Jogo encerrado"; chip.className = "status-chip closed"; }
+  else if (liveEnabled && isLive(m)) { chip.innerHTML = "AO VIVO"; chip.className = "status-chip live"; }
   else if (locked) { chip.textContent = "Palpites encerrados"; chip.className = "status-chip closed"; }
   else { chip.textContent = "Palpites abertos"; chip.className = "status-chip"; }
 
@@ -506,4 +516,11 @@ renderRules();
 loadAll();
 
 setInterval(tickCountdown, 1000);
-setInterval(loadAll, 30000);
+
+// atualiza mais rápido quando o jogo está ao vivo
+function scheduleRefresh() {
+  const m = matches.find((x) => x.id === currentMatch);
+  const delay = liveEnabled && isLive(m) ? 15000 : 30000;
+  setTimeout(async () => { await loadAll(); scheduleRefresh(); }, delay);
+}
+scheduleRefresh();

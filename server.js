@@ -85,10 +85,11 @@ function requireAdmin(req, res, next) {
 
 app.get("/api/rules", (_req, res) => res.json(RULES));
 
-// Configurações públicas (premiação, subtítulo)
+// Configurações públicas (premiação, subtítulo, status da integração ao vivo)
 app.get("/api/config", (_req, res) => {
   const row = db.prepare("SELECT data FROM settings WHERE id = 1").get();
-  res.json(row ? JSON.parse(row.data) : {});
+  const data = row ? JSON.parse(row.data) : {};
+  res.json({ ...data, live: liveEnabled() });
 });
 
 // Lista de partidas
