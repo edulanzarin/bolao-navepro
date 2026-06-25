@@ -278,7 +278,7 @@ app.post("/api/admin/matches", requireAdmin, (req, res) => {
   if (!homeTeam || !awayTeam) {
     return res.status(400).json({ error: "Informe os dois times." });
   }
-  const q = Array.isArray(questions) && questions.length ? JSON.stringify(questions) : JSON.stringify(DEFAULT_QUESTIONS);
+  const q = JSON.stringify(DEFAULT_QUESTIONS); // perguntas fixas em toda partida
   const cat = category === "others" ? "others" : "brazil";
   const info = db
     .prepare(
@@ -288,14 +288,14 @@ app.post("/api/admin/matches", requireAdmin, (req, res) => {
   res.json({ ok: true, id: info.lastInsertRowid });
 });
 
-// Editar dados da partida (inclui perguntas e estatísticas manuais)
+// Editar dados da partida
 app.put("/api/admin/matches/:id", requireAdmin, (req, res) => {
-  const { homeTeam, awayTeam, homeFlag, awayFlag, matchDate, lockAt, venue, questions, category, externalId, stats } = req.body || {};
+  const { homeTeam, awayTeam, homeFlag, awayFlag, matchDate, lockAt, venue, category, externalId, stats } = req.body || {};
   const match = db.prepare("SELECT * FROM matches WHERE id = ?").get(req.params.id);
   if (!match) return res.status(404).json({ error: "Partida não encontrada." });
-  const q = Array.isArray(questions) ? JSON.stringify(questions) : match.questions;
   const st = stats && typeof stats === "object" ? JSON.stringify(stats) : match.stats;
   const cat = category === undefined ? match.category : category === "others" ? "others" : "brazil";
+  // perguntas são fixas: garante o conjunto padrão em toda partida
   db.prepare(
     "UPDATE matches SET home_team = ?, away_team = ?, home_flag = ?, away_flag = ?, match_date = ?, lock_at = ?, venue = ?, questions = ?, category = ?, external_id = ?, stats = ? WHERE id = ?"
   ).run(
@@ -306,7 +306,7 @@ app.put("/api/admin/matches/:id", requireAdmin, (req, res) => {
     matchDate ?? match.match_date,
     lockAt ?? match.lock_at,
     venue ?? match.venue,
-    q,
+    JSON.stringify(DEFAULT_QUESTIONS),
     cat,
     externalId ?? match.external_id,
     st,

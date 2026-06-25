@@ -216,7 +216,7 @@ function renderQuestions(m) {
     }
     const pts = q.type === "players" ? `+${RULES_DATA.SPECIAL} pts por jogador` : `+${RULES_DATA.SPECIAL} pts`;
     return `<div class="q-card">
-      <div class="q-head"><span class="q-label">${escapeHTML(q.label)}</span><span class="q-pts">${pts}</span></div>
+      <div class="q-head"><span class="q-label">${q.icon ? icon(q.icon) : ""}${escapeHTML(q.label)}</span><span class="q-pts">${pts}</span></div>
       ${body}
     </div>`;
   }).join("");
