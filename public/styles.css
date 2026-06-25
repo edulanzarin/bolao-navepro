@@ -544,3 +544,54 @@ h1, h2, h3, .hero-title, .section-title { font-family: "Sora", sans-serif; }
 .q-number { flex-direction: row !important; align-items: center; gap: 12px; }
 .q-number .step-btn { width: 40px; height: 44px; }
 .q-number .score-display { width: 66px; height: 48px; font-size: 24px; border-radius: 12px; }
+
+/* ---------- TABELAS COM SCROLL ---------- */
+.table-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+/* ---------- RESPONSIVO (mobile) ---------- */
+@media (max-width: 760px) {
+  .container { padding: 0 16px; }
+  .section { padding: 30px 16px; }
+  .topbar { padding: 14px 16px; }
+  .btn-pill { padding: 9px 16px; font-size: 12px; }
+
+  .hero { padding: 30px 16px 16px; }
+  .hero-art { max-width: 260px; }
+  .hero-sub { font-size: 15px; }
+
+  .countdown-units { gap: 6px; }
+  .cd-unit { min-width: 0; flex: 1 1 0; padding: 10px 2px; }
+  .cd-unit strong { font-size: 24px; }
+  .cd-unit span { font-size: 9px; }
+  .countdown-units i { font-size: 16px; }
+
+  .card { padding: 18px 16px; }
+  .section-title { margin-bottom: 18px; }
+  .match-head { flex-direction: column; align-items: flex-start; }
+
+  .ranking-table th, .ranking-table td { padding: 9px 8px; font-size: 13px; }
+
+  .field.mini, .field.mini.grow { flex: 1 1 100%; }
+  .qe-type, .qe-label, .qe-points { flex: 1 1 100%; }
+  .qe-points { text-align: left; }
+  .admin-actions { gap: 6px; }
+  .admin-actions .btn-ghost, .admin-actions .btn-gold { flex: 1 1 auto; text-align: center; }
+
+  .ranking-toolbar { flex-direction: column; align-items: stretch; gap: 10px; }
+  .segmented { justify-content: center; }
+
+  .wnav { flex-wrap: wrap; gap: 10px; }
+  .wbtn { flex: 1 1 auto; min-width: 0; }
+}
+
+@media (max-width: 440px) {
+  .hero-title { font-size: clamp(36px, 13vw, 48px); }
+  .cd-unit strong { font-size: 20px; }
+  .scoreboard { gap: 8px; padding: 16px 8px; }
+  .sb-team { min-width: 64px; }
+  .flag { width: 52px; height: 52px; font-size: 28px; }
+  .score-display { width: 58px; height: 64px; font-size: 30px; }
+  .prize { gap: 10px; padding: 11px 12px; }
+  .prize .place { font-size: 13px; }
+  .prize .reward { font-size: 13px; }
+}

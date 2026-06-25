@@ -311,6 +311,7 @@ async function loadMatches() {
       </div>
       <div class="admin-actions">
         <button class="btn-gold mini" data-act="save-result" data-id="${m.id}">Salvar resultado</button>
+        ${m.external_id ? `<button class="btn-ghost" data-act="sync" data-id="${m.id}">Sincronizar agora</button>` : ""}
         ${m.status === "finished"
           ? `<button class="btn-ghost" data-act="reopen" data-id="${m.id}">Reabrir jogo</button>`
           : `<button class="btn-ghost" data-act="finish" data-id="${m.id}">Encerrar e publicar</button>`}
@@ -321,6 +322,7 @@ async function loadMatches() {
 
       <details class="admin-preds">
         <summary>${detail.predictions.length} palpite(s) · ver detalhes e contatos</summary>
+        <div class="table-scroll">
         <table class="ranking-table">
           <thead><tr><th>Participante</th><th>CPF/CNPJ</th><th>Contato</th><th>Placar</th><th>Respostas</th><th>Pts</th><th></th></tr></thead>
           <tbody>
@@ -335,6 +337,7 @@ async function loadMatches() {
             </tr>`).join("") || `<tr><td colspan="7" class="empty">Sem palpites.</td></tr>`}
           </tbody>
         </table>
+        </div>
       </details>
     `;
     box.appendChild(card);
@@ -364,6 +367,13 @@ async function handleAction(act, id) {
     }
     if (act === "export") {
       await downloadCsv(`/api/admin/export/matches/${id}`, `palpites-jogo-${id}.csv`);
+      return;
+    }
+    if (act === "sync") {
+      const r = await api(`/api/admin/matches/${id}/sync`, { method: "POST" });
+      const d = r.data || {};
+      alert(`Sincronizado.\nPlacar: ${d.homeScore ?? "-"} x ${d.awayScore ?? "-"}\nMarcadores: ${(d.scorers || []).join(", ") || "-"}\n${d.finished ? "Jogo encerrado" : d.minute ? "Ao vivo: " + d.minute : "Ainda não começou"}`);
+      loadMatches();
       return;
     }
     if (act === "saveq") {

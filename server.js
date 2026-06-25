@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import db from "./db.js";
 import { scorePrediction, RULES } from "./scoring.js";
 import { validateDocument } from "./validators.js";
-import { liveEnabled, fetchFixture } from "./live.js";
+import { liveEnabled, liveProvider, fetchFixture } from "./live.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -79,6 +79,26 @@ function requireAdmin(req, res, next) {
     return res.status(401).json({ error: "Senha de administrador inválida." });
   }
   next();
+}
+
+function brazilSideOf(match) {
+  if ((match.home_team || "").toLowerCase().includes("bras")) return "home";
+  if ((match.away_team || "").toLowerCase().includes("bras")) return "away";
+  return null;
+}
+
+// Aplica os dados de um provedor ao vivo na partida e recalcula a pontuação.
+function applyLive(m, data) {
+  const answers = { ...m.answers };
+  if (data.scorers && data.scorers.length) answers.scorers = data.scorers;
+  const stats = { ...m.stats, ...(data.stats || {}) };
+  if (data.minute) stats.minute = data.minute; else delete stats.minute;
+  const home = data.homeScore ?? m.home_score;
+  const away = data.awayScore ?? m.away_score;
+  db.prepare(
+    "UPDATE matches SET home_score = ?, away_score = ?, stats = ?, answers = ?, status = ? WHERE id = ?"
+  ).run(home, away, JSON.stringify(stats), JSON.stringify(answers), data.finished ? "finished" : m.status, m.id);
+  recalcMatchPoints(m.id);
 }
 
 /* ------------------------------ public API ------------------------------ */
@@ -331,7 +351,17 @@ app.put("/api/admin/matches/:id/result", requireAdmin, (req, res) => {
   res.json({ ok: true });
 });
 
-// Excluir partida
+// Sincronizar agora com o provedor ao vivo (manual, ignora a janela do jogo)
+app.post("/api/admin/matches/:id/sync", requireAdmin, async (req, res) => {
+  if (!liveEnabled()) return res.status(400).json({ error: "Integração ao vivo desativada." });
+  const match = parseMatch(db.prepare("SELECT * FROM matches WHERE id = ?").get(req.params.id));
+  if (!match) return res.status(404).json({ error: "Partida não encontrada." });
+  if (!match.external_id) return res.status(400).json({ error: "Defina o ID do jogo na API para esta partida." });
+  const data = await fetchFixture(match.external_id, { brazilSide: brazilSideOf(match) });
+  if (!data) return res.status(502).json({ error: "Não foi possível obter dados do provedor agora." });
+  applyLive(match, data);
+  res.json({ ok: true, data });
+});
 app.delete("/api/admin/matches/:id", requireAdmin, (req, res) => {
   db.prepare("DELETE FROM matches WHERE id = ?").run(req.params.id);
   res.json({ ok: true });
@@ -412,13 +442,7 @@ app.get("/api/admin/export/matches/:id", requireAdmin, (req, res) => {
 // Healthcheck (útil pro container/orquestrador)
 app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
 
-/* ------------------------- atualização ao vivo (opcional) ------------------------- */
-
-function brazilSideOf(match) {
-  if ((match.home_team || "").toLowerCase().includes("bras")) return "home";
-  if ((match.away_team || "").toLowerCase().includes("bras")) return "away";
-  return null;
-}
+/* ------------------------- atualização ao vivo ------------------------- */
 
 async function pollLive() {
   const now = Date.now();
@@ -428,26 +452,15 @@ async function pollLive() {
     .map(parseMatch);
   for (const m of rows) {
     const kickoff = m.match_date ? new Date(m.match_date).getTime() : 0;
-    // só consulta na janela do jogo (10 min antes até 3h depois) para poupar requisições
-    if (kickoff && (now < kickoff - 10 * 60000 || now > kickoff + 3 * 3600000)) continue;
+    // só consulta na janela do jogo (10 min antes até 4h depois)
+    if (kickoff && (now < kickoff - 10 * 60000 || now > kickoff + 4 * 3600000)) continue;
     const data = await fetchFixture(m.external_id, { brazilSide: brazilSideOf(m) });
-    if (!data) continue;
-
-    const answers = { ...m.answers };
-    if (data.scorers && data.scorers.length) answers.scorers = data.scorers;
-    const stats = { ...m.stats, ...data.stats };
-    const home = data.homeScore ?? m.home_score;
-    const away = data.awayScore ?? m.away_score;
-
-    db.prepare(
-      "UPDATE matches SET home_score = ?, away_score = ?, stats = ?, answers = ?, status = ? WHERE id = ?"
-    ).run(home, away, JSON.stringify(stats), JSON.stringify(answers), data.finished ? "finished" : m.status, m.id);
-    recalcMatchPoints(m.id);
+    if (data) applyLive(m, data);
   }
 }
 
 if (liveEnabled()) {
-  console.log("Integração ao vivo (API-Football) ativada.");
+  console.log(`Integração ao vivo ativada (provedor: ${liveProvider()}).`);
   setInterval(() => pollLive().catch(() => {}), 120000);
 }
 

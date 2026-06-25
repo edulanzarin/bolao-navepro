@@ -422,6 +422,13 @@ async function renderMatch() {
 
   currentDetail = await api(`/api/matches/${m.id}`);
   renderStats(m);
+
+  // mostra o minuto no selo AO VIVO, se a integração trouxer
+  if (liveEnabled && isLive(m) && m.status !== "finished" && currentDetail.stats && currentDetail.stats.minute) {
+    const min = String(currentDetail.stats.minute);
+    chip.innerHTML = `AO VIVO · ${escapeHTML(min)}${/^\d+$/.test(min) ? "'" : ""}`;
+    chip.className = "status-chip live";
+  }
 }
 
 /* ---------- ranking ---------- */
