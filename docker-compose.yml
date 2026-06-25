@@ -11,6 +11,8 @@ services:
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-navepro2026}
       DATA_DIR: /app/data
       TZ: America/Sao_Paulo
+      # (Opcional) placar/estatísticas ao vivo via API-Football
+      API_FOOTBALL_KEY: ${API_FOOTBALL_KEY:-}
     volumes:
       # Persiste o banco SQLite fora do container
       - bolao-data:/app/data

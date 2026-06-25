@@ -54,6 +54,9 @@
           <label class="field"><span>Data e hora do jogo</span><input id="nDate" type="datetime-local" /></label>
           <label class="field"><span>Encerrar palpites em</span><input id="nLock" type="datetime-local" /></label>
           <label class="field"><span>Local (opcional)</span><input id="nVenue" placeholder="Hard Rock Stadium · Miami" /></label>
+          <label class="field"><span>Categoria</span>
+            <select id="nCategory"><option value="brazil">Seleção Brasileira</option><option value="others">Outros jogos</option></select></label>
+          <label class="field"><span>ID do jogo na API (opcional)</span><input id="nExternal" placeholder="ex: 1208123 (API-Football)" /></label>
         </div>
         <p class="hint-text">As perguntas especiais e o resultado são configurados na partida, logo abaixo, depois de criada.</p>
         <button class="btn-gold" id="createBtn">Criar partida</button>

@@ -43,6 +43,7 @@ O banco SQLite fica no volume `bolao-data` (`/app/data/bolao.db`) e persiste ent
 | `ADMIN_PASSWORD` | `navepro2026` | Senha do painel do organizador |
 | `DATA_DIR` | `/app/data` | Diretório do banco SQLite |
 | `TZ` | `America/Sao_Paulo` | Fuso usado nos prazos |
+| `API_FOOTBALL_KEY` | — | (Opcional) Chave do API-Football para placar/estatísticas ao vivo. Sem ela, o resultado é lançado manualmente. |
 
 ## Publicação em subdomínio (ex.: bolao.dominio.com.br)
 

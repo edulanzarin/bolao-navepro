@@ -62,6 +62,14 @@
       </aside>
     </section>
 
+    <!-- CATEGORIAS -->
+    <div class="container">
+      <div class="cat-tabs">
+        <button class="cat-tab active" data-cat="brazil">Seleção Brasileira</button>
+        <button class="cat-tab" data-cat="others" disabled>Outros jogos <span class="soon">em breve</span></button>
+      </div>
+    </div>
+
     <!-- TABS -->
     <div class="container"><div class="match-tabs" id="matchTabs"></div></div>
 
@@ -185,6 +193,13 @@
           <p class="form-hint">Confira tudo antes de enviar: o palpite é <strong>único por CPF/CNPJ</strong> e <strong>não pode ser alterado</strong> depois de enviado.</p>
         </form>
       </div>
+    </section>
+
+    <!-- ESTATÍSTICAS -->
+    <section class="container section" id="statsSection" hidden>
+      <p class="section-kicker">Estatísticas</p>
+      <h2 class="section-title">Números da <span class="accent-blue">partida</span></h2>
+      <div class="card" id="statsCard"></div>
     </section>
 
     <!-- RANKING -->

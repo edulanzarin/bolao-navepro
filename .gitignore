@@ -1,8 +1,12 @@
 # dependências
 node_modules/
 
-# dados locais (banco SQLite) e variáveis de ambiente
+# dados locais (banco SQLite), backups e variáveis de ambiente
 data/
+backups/
+*.db
+*.db-wal
+*.db-shm
 .env
 
 # logs

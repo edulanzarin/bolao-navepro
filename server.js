@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import db from "./db.js";
 import { scorePrediction, RULES } from "./scoring.js";
 import { validateDocument } from "./validators.js";
+import { liveEnabled, fetchFixture } from "./live.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -20,9 +21,11 @@ function parseMatch(row) {
   if (!row) return row;
   let questions = [];
   let answers = {};
+  let stats = {};
   try { questions = JSON.parse(row.questions || "[]"); } catch {}
   try { answers = JSON.parse(row.answers || "{}"); } catch {}
-  return { ...row, questions, answers };
+  try { stats = JSON.parse(row.stats || "{}"); } catch {}
+  return { ...row, questions, answers, stats };
 }
 
 function parsePred(row) {
@@ -236,27 +239,30 @@ app.get("/api/admin/matches/:id", requireAdmin, (req, res) => {
 
 // Criar partida
 app.post("/api/admin/matches", requireAdmin, (req, res) => {
-  const { homeTeam, awayTeam, homeFlag, awayFlag, matchDate, lockAt, venue, questions } = req.body || {};
+  const { homeTeam, awayTeam, homeFlag, awayFlag, matchDate, lockAt, venue, questions, category, externalId } = req.body || {};
   if (!homeTeam || !awayTeam) {
     return res.status(400).json({ error: "Informe os dois times." });
   }
   const q = Array.isArray(questions) ? JSON.stringify(questions) : "[]";
+  const cat = category === "others" ? "others" : "brazil";
   const info = db
     .prepare(
-      "INSERT INTO matches (home_team, away_team, home_flag, away_flag, match_date, lock_at, venue, questions) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      "INSERT INTO matches (home_team, away_team, home_flag, away_flag, match_date, lock_at, venue, questions, category, external_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
     )
-    .run(homeTeam.trim(), awayTeam.trim(), homeFlag || "", awayFlag || "", matchDate || null, lockAt || null, venue || null, q);
+    .run(homeTeam.trim(), awayTeam.trim(), homeFlag || "", awayFlag || "", matchDate || null, lockAt || null, venue || null, q, cat, externalId || null);
   res.json({ ok: true, id: info.lastInsertRowid });
 });
 
-// Editar dados da partida (inclui perguntas especiais)
+// Editar dados da partida (inclui perguntas e estatísticas manuais)
 app.put("/api/admin/matches/:id", requireAdmin, (req, res) => {
-  const { homeTeam, awayTeam, homeFlag, awayFlag, matchDate, lockAt, venue, questions } = req.body || {};
+  const { homeTeam, awayTeam, homeFlag, awayFlag, matchDate, lockAt, venue, questions, category, externalId, stats } = req.body || {};
   const match = db.prepare("SELECT * FROM matches WHERE id = ?").get(req.params.id);
   if (!match) return res.status(404).json({ error: "Partida não encontrada." });
   const q = Array.isArray(questions) ? JSON.stringify(questions) : match.questions;
+  const st = stats && typeof stats === "object" ? JSON.stringify(stats) : match.stats;
+  const cat = category === undefined ? match.category : category === "others" ? "others" : "brazil";
   db.prepare(
-    "UPDATE matches SET home_team = ?, away_team = ?, home_flag = ?, away_flag = ?, match_date = ?, lock_at = ?, venue = ?, questions = ? WHERE id = ?"
+    "UPDATE matches SET home_team = ?, away_team = ?, home_flag = ?, away_flag = ?, match_date = ?, lock_at = ?, venue = ?, questions = ?, category = ?, external_id = ?, stats = ? WHERE id = ?"
   ).run(
     homeTeam ?? match.home_team,
     awayTeam ?? match.away_team,
@@ -266,6 +272,9 @@ app.put("/api/admin/matches/:id", requireAdmin, (req, res) => {
     lockAt ?? match.lock_at,
     venue ?? match.venue,
     q,
+    cat,
+    externalId ?? match.external_id,
+    st,
     match.id
   );
   recalcMatchPoints(match.id);
@@ -401,6 +410,45 @@ app.get("/api/admin/export/matches/:id", requireAdmin, (req, res) => {
 
 // Healthcheck (útil pro container/orquestrador)
 app.get("/healthz", (_req, res) => res.json({ status: "ok" }));
+
+/* ------------------------- atualização ao vivo (opcional) ------------------------- */
+
+function brazilSideOf(match) {
+  if ((match.home_team || "").toLowerCase().includes("bras")) return "home";
+  if ((match.away_team || "").toLowerCase().includes("bras")) return "away";
+  return null;
+}
+
+async function pollLive() {
+  const now = Date.now();
+  const rows = db
+    .prepare("SELECT * FROM matches WHERE external_id IS NOT NULL AND status != 'finished'")
+    .all()
+    .map(parseMatch);
+  for (const m of rows) {
+    const kickoff = m.match_date ? new Date(m.match_date).getTime() : 0;
+    // só consulta na janela do jogo (10 min antes até 3h depois) para poupar requisições
+    if (kickoff && (now < kickoff - 10 * 60000 || now > kickoff + 3 * 3600000)) continue;
+    const data = await fetchFixture(m.external_id, { brazilSide: brazilSideOf(m) });
+    if (!data) continue;
+
+    const answers = { ...m.answers };
+    if (data.scorers && data.scorers.length) answers.scorers = data.scorers;
+    const stats = { ...m.stats, ...data.stats };
+    const home = data.homeScore ?? m.home_score;
+    const away = data.awayScore ?? m.away_score;
+
+    db.prepare(
+      "UPDATE matches SET home_score = ?, away_score = ?, stats = ?, answers = ?, status = ? WHERE id = ?"
+    ).run(home, away, JSON.stringify(stats), JSON.stringify(answers), data.finished ? "finished" : m.status, m.id);
+    recalcMatchPoints(m.id);
+  }
+}
+
+if (liveEnabled()) {
+  console.log("Integração ao vivo (API-Football) ativada.");
+  setInterval(() => pollLive().catch(() => {}), 120000);
+}
 
 app.listen(PORT, () => {
   console.log(`Bolão NAVEPRO rodando em http://localhost:${PORT}`);

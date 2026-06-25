@@ -22,10 +22,13 @@ db.exec(`
     lock_at       TEXT,
     venue         TEXT,
     status        TEXT NOT NULL DEFAULT 'open',
+    category      TEXT NOT NULL DEFAULT 'brazil',  -- brazil | others
+    external_id   TEXT,                             -- id do jogo no provedor de dados (API-Football)
     home_score    INTEGER,
     away_score    INTEGER,
     questions     TEXT DEFAULT '[]',   -- definição das perguntas especiais (JSON)
     answers       TEXT DEFAULT '{}',   -- respostas oficiais das perguntas (JSON)
+    stats         TEXT DEFAULT '{}',   -- estatísticas oficiais (posse, escanteios, faltas...) (JSON)
     created_at    TEXT NOT NULL DEFAULT (datetime('now'))
   );
 
@@ -40,6 +43,9 @@ if (!matchCols.some((c) => c.name === "venue")) db.exec("ALTER TABLE matches ADD
 if (!matchCols.some((c) => c.name === "lock_at")) db.exec("ALTER TABLE matches ADD COLUMN lock_at TEXT");
 if (!matchCols.some((c) => c.name === "questions")) db.exec("ALTER TABLE matches ADD COLUMN questions TEXT DEFAULT '[]'");
 if (!matchCols.some((c) => c.name === "answers")) db.exec("ALTER TABLE matches ADD COLUMN answers TEXT DEFAULT '{}'");
+if (!matchCols.some((c) => c.name === "category")) db.exec("ALTER TABLE matches ADD COLUMN category TEXT NOT NULL DEFAULT 'brazil'");
+if (!matchCols.some((c) => c.name === "external_id")) db.exec("ALTER TABLE matches ADD COLUMN external_id TEXT");
+if (!matchCols.some((c) => c.name === "stats")) db.exec("ALTER TABLE matches ADD COLUMN stats TEXT DEFAULT '{}'");
 
 /* ---- Palpites: identidade por CPF/CNPJ (1 palpite por documento/partida) ---- */
 const predCols = db.prepare("PRAGMA table_info(predictions)").all();

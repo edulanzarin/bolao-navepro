@@ -116,17 +116,30 @@ $("#createBtn").addEventListener("click", async () => {
         homeTeam: $("#nHome").value, awayTeam: $("#nAway").value,
         homeFlag: $("#nHomeFlag").value, awayFlag: $("#nAwayFlag").value,
         matchDate: toBrasiliaISO($("#nDate").value), lockAt: toBrasiliaISO($("#nLock").value),
-        venue: $("#nVenue").value || null,
+        venue: $("#nVenue").value || null, category: $("#nCategory").value,
+        externalId: $("#nExternal").value || null,
       }),
     });
     msg.textContent = "Partida criada! Configure as perguntas logo abaixo."; msg.classList.add("ok");
-    ["nHome", "nAway", "nHomeFlag", "nAwayFlag", "nDate", "nLock", "nVenue"].forEach((id) => ($("#" + id).value = ""));
+    ["nHome", "nAway", "nHomeFlag", "nAwayFlag", "nDate", "nLock", "nVenue", "nExternal"].forEach((id) => ($("#" + id).value = ""));
     loadMatches();
   } catch (e) { msg.textContent = e.message; msg.classList.add("err"); }
 });
 
 /* ----------------------- CONSTRUTOR DE PERGUNTAS ----------------------- */
 const QTYPES = { players: "Jogadores (marcadores)", number: "Número", choice: "Múltipla escolha" };
+const STAT_FIELDS = [["possession", "Posse %"], ["shots", "Finalizações"], ["corners", "Escanteios"], ["fouls", "Faltas"], ["yellow", "Cartões amarelos"]];
+
+function gatherStats(mid) {
+  const s = {};
+  for (const [k] of STAT_FIELDS) {
+    for (const side of ["Home", "Away"]) {
+      const el = document.getElementById(`st-${mid}-${k}${side}`);
+      if (el && el.value !== "") s[k + side] = Number(el.value);
+    }
+  }
+  return s;
+}
 
 function optRow(value) {
   const row = document.createElement("div");
@@ -264,9 +277,22 @@ async function loadMatches() {
         <label class="field mini grow"><span>Data e hora</span><input type="datetime-local" id="md-${m.id}" value="${toLocalInput(m.match_date)}" /></label>
         <label class="field mini grow"><span>Encerrar palpites em</span><input type="datetime-local" id="ml-${m.id}" value="${toLocalInput(m.lock_at)}" /></label>
         <label class="field mini grow"><span>Local</span><input type="text" id="mv-${m.id}" value="${escapeHTML(m.venue || "")}" placeholder="Estádio · Cidade" /></label>
+        <label class="field mini"><span>Categoria</span>
+          <select id="mc-${m.id}"><option value="brazil" ${m.category !== "others" ? "selected" : ""}>Seleção</option><option value="others" ${m.category === "others" ? "selected" : ""}>Outros</option></select></label>
+        <label class="field mini"><span>ID API</span><input type="text" id="mx-${m.id}" value="${escapeHTML(m.external_id || "")}" placeholder="opcional" /></label>
         <button class="btn-ghost mini" data-act="savemeta" data-id="${m.id}" style="align-self:flex-end;">Salvar dados</button>
       </div>
       <p class="hint-text">Os palpites encerram sozinhos no horário acima — não precisa travar na mão.</p>
+
+      <details class="admin-preds">
+        <summary>Estatísticas (preenchimento manual — ou automático com a API)</summary>
+        <div class="admin-row">
+          ${STAT_FIELDS.map(([k, label]) => `
+            <label class="field mini"><span>${label} · ${escapeHTML(m.home_team)}</span><input type="number" min="0" id="st-${m.id}-${k}Home" value="${detail.stats?.[k + "Home"] ?? ""}" /></label>
+            <label class="field mini"><span>${label} · ${escapeHTML(m.away_team)}</span><input type="number" min="0" id="st-${m.id}-${k}Away" value="${detail.stats?.[k + "Away"] ?? ""}" /></label>`).join("")}
+        </div>
+        <button class="btn-ghost mini" data-act="savemeta" data-id="${m.id}">Salvar dados e estatísticas</button>
+      </details>
 
       <p class="block-label">Perguntas especiais</p>
       <div id="qbuilder-${m.id}" class="qbuilder"></div>
@@ -346,7 +372,11 @@ async function handleAction(act, id) {
     } else if (act === "savemeta") {
       await api(`/api/admin/matches/${id}`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ matchDate: toBrasiliaISO($("#md-" + id).value), lockAt: toBrasiliaISO($("#ml-" + id).value), venue: $("#mv-" + id).value || null }),
+        body: JSON.stringify({
+          matchDate: toBrasiliaISO($("#md-" + id).value), lockAt: toBrasiliaISO($("#ml-" + id).value),
+          venue: $("#mv-" + id).value || null, category: $("#mc-" + id).value,
+          externalId: $("#mx-" + id).value || null, stats: gatherStats(id),
+        }),
       });
     } else if (act === "save-result" || act === "finish") {
       const h = $("#rh-" + id).value, a = $("#ra-" + id).value;

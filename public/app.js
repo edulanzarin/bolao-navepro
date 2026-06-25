@@ -6,6 +6,7 @@ let currentMatch = null;
 let currentDetail = null;
 let userPinned = false;
 let rankingMode = "geral";
+let activeCategory = "brazil";
 let lockTime = null;
 let kickoffTime = null;
 
@@ -85,6 +86,65 @@ document.addEventListener("click", (e) => {
   opt.classList.add("selected");
 });
 
+/* ---------- marcadores em "chips" ---------- */
+function updateChipAdd(cont) {
+  const max = Number(cont.dataset.max) || 3;
+  const count = cont.querySelectorAll(".chip").length;
+  cont.querySelector(".chip-add").style.display = count >= max ? "none" : "";
+}
+document.addEventListener("change", (e) => {
+  const sel = e.target.closest(".chip-select");
+  if (!sel) return;
+  const cont = sel.closest(".q-players-chips");
+  const max = Number(cont.dataset.max) || 3;
+  const chips = cont.querySelector(".chips");
+  const val = sel.value;
+  sel.value = "";
+  if (!val) return;
+  const existing = [...chips.querySelectorAll(".chip")].map((c) => c.dataset.value);
+  if (existing.includes(val) || existing.length >= max) return;
+  const chip = document.createElement("span");
+  chip.className = "chip";
+  chip.dataset.value = val;
+  chip.innerHTML = `${escapeHTML(val)} <button type="button" class="chip-remove" aria-label="remover">×</button>`;
+  chips.appendChild(chip);
+  updateChipAdd(cont);
+});
+document.addEventListener("click", (e) => {
+  const rm = e.target.closest(".chip-remove");
+  if (!rm) return;
+  const cont = rm.closest(".q-players-chips");
+  rm.closest(".chip").remove();
+  updateChipAdd(cont);
+});
+
+/* ---------- estatísticas da partida ---------- */
+const STAT_ROWS = [
+  ["possession", "Posse de bola", "%"],
+  ["shots", "Finalizações", ""],
+  ["corners", "Escanteios", ""],
+  ["fouls", "Faltas", ""],
+  ["yellow", "Cartões amarelos", ""],
+];
+function renderStats(m) {
+  const sec = $("#statsSection");
+  const card = $("#statsCard");
+  const s = (currentDetail && currentDetail.stats) || {};
+  const rows = STAT_ROWS.filter(([k]) => s[k + "Home"] != null || s[k + "Away"] != null);
+  if (!rows.length) { sec.hidden = true; return; }
+  sec.hidden = false;
+  const body = rows.map(([k, label, suf]) => {
+    const h = Number(s[k + "Home"] || 0);
+    const a = Number(s[k + "Away"] || 0);
+    const tot = h + a || 1;
+    return `<div class="stat-line">
+      <div class="stat-nums"><span>${h}${suf}</span><em>${escapeHTML(label)}</em><span>${a}${suf}</span></div>
+      <div class="stat-bar"><span style="width:${((h / tot) * 100).toFixed(0)}%"></span><i style="width:${((a / tot) * 100).toFixed(0)}%"></i></div>
+    </div>`;
+  }).join("");
+  card.innerHTML = `<div class="stat-head"><span>${escapeHTML(m.home_team)}</span><span>${escapeHTML(m.away_team)}</span></div>${body}`;
+}
+
 /* ---------- perguntas especiais ---------- */
 function renderQuestions(m) {
   const box = $("#questionsBox");
@@ -96,10 +156,13 @@ function renderQuestions(m) {
     let body = "";
     if (q.type === "players") {
       const n = q.max || 3;
-      body = `<div class="q-players">${Array.from({ length: n }).map(() =>
-        `<div class="select-wrap"><select class="q-player" data-qid="${q.id}">
-          <option value="">Selecionar jogador</option>${squadOptions()}
-        </select></div>`).join("")}</div>`;
+      body = `<div class="q-players-chips" data-qid="${q.id}" data-max="${n}">
+        <div class="chips"></div>
+        <div class="select-wrap chip-add">
+          <select class="chip-select"><option value="">Selecionar jogador</option>${squadOptions()}</select>
+        </div>
+        <p class="chip-hint">Escolha até ${n} jogador${n > 1 ? "es" : ""}.</p>
+      </div>`;
     } else if (q.type === "number") {
       body = `<div class="sb-stepper q-number">
         <button type="button" class="step-btn" data-step="down" data-target="q_${q.id}">−</button>
@@ -122,8 +185,9 @@ function collectAnswers(m) {
   const ans = {};
   for (const q of m.questions || []) {
     if (q.type === "players") {
-      const vals = [...document.querySelectorAll(`.q-player[data-qid="${q.id}"]`)].map((s) => s.value).filter(Boolean);
-      if (vals.length) ans[q.id] = [...new Set(vals)];
+      const cont = document.querySelector(`.q-players-chips[data-qid="${q.id}"]`);
+      const vals = cont ? [...cont.querySelectorAll(".chip")].map((c) => c.dataset.value) : [];
+      if (vals.length) ans[q.id] = vals;
     } else if (q.type === "number") {
       const el = document.getElementById(`q_${q.id}`);
       if (el) ans[q.id] = Number(el.value) || 0;
@@ -272,11 +336,14 @@ function setUnits(d, h, m, s) {
 }
 
 /* ---------- carregamento ---------- */
+const catMatches = () => matches.filter((m) => (m.category || "brazil") === activeCategory);
+
 async function loadAll() {
   matches = await api("/api/matches");
-  const serverCurrent = matches.find((m) => m.current);
-  const fallback = serverCurrent ? serverCurrent.id : (matches[0] && matches[0].id);
-  if (!userPinned || !matches.some((m) => m.id === currentMatch)) currentMatch = fallback;
+  const list = catMatches();
+  const serverCurrent = list.find((m) => m.current);
+  const fallback = serverCurrent ? serverCurrent.id : (list[0] && list[0].id);
+  if (!userPinned || !list.some((m) => m.id === currentMatch)) currentMatch = fallback ?? null;
   renderTabs();
   await renderMatch();
   await renderRanking();
@@ -284,8 +351,9 @@ async function loadAll() {
 
 function renderTabs() {
   const tabs = $("#matchTabs");
-  if (matches.length <= 1) { tabs.innerHTML = ""; return; }
-  tabs.innerHTML = matches.map((m) => {
+  const list = catMatches();
+  if (list.length <= 1) { tabs.innerHTML = ""; return; }
+  tabs.innerHTML = list.map((m) => {
     const tag = m.status === "finished" ? "Encerrado" : isClosed(m) ? "Fechado" : "Aberto";
     const live = m.current ? " • atual" : "";
     return `<button class="match-tab ${m.id === currentMatch ? "active" : ""}" data-id="${m.id}">
@@ -299,6 +367,17 @@ function renderTabs() {
     })
   );
 }
+
+document.querySelectorAll(".cat-tab").forEach((btn) =>
+  btn.addEventListener("click", () => {
+    if (btn.disabled) return;
+    document.querySelectorAll(".cat-tab").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeCategory = btn.dataset.cat;
+    userPinned = false;
+    loadAll();
+  })
+);
 
 async function renderMatch() {
   const m = matches.find((x) => x.id === currentMatch);
@@ -323,7 +402,7 @@ async function renderMatch() {
   const locked = isClosed(m);
   $("#lockedNotice").hidden = !locked;
   ["homeScore", "awayScore", "participant", "document", "phone", "email"].forEach((id) => ($("#" + id).disabled = locked));
-  document.querySelectorAll(".step-btn, .wbtn, .q-player, .q-input").forEach((b) => (b.disabled = locked));
+  document.querySelectorAll(".step-btn, .wbtn, .q-input, .chip-select, .chip-remove").forEach((b) => (b.disabled = locked));
   document.querySelectorAll(".q-opt").forEach((b) => b.classList.toggle("disabled", locked));
 
   const chip = $("#statusChip");
@@ -332,6 +411,7 @@ async function renderMatch() {
   else { chip.textContent = "Palpites abertos"; chip.className = "status-chip"; }
 
   currentDetail = await api(`/api/matches/${m.id}`);
+  renderStats(m);
 }
 
 /* ---------- ranking ---------- */
