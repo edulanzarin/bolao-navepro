@@ -87,8 +87,8 @@ if (!db.prepare("SELECT data FROM settings WHERE id = 1").get()) {
   db.prepare("INSERT INTO settings (id, data) VALUES (1, ?)").run(JSON.stringify(DEFAULT_SETTINGS));
 }
 
-/* ---- Perguntas especiais padrão para a partida inicial ---- */
-const DEFAULT_QUESTIONS = [
+/* ---- Perguntas especiais padrão (toda partida nova já vem com elas) ---- */
+export const DEFAULT_QUESTIONS = [
   { id: "scorers", type: "players", label: "Quem marca gol pelo Brasil?", points: 3, max: 3 },
   { id: "fouls", type: "range", label: "Faltas na partida", points: 3, bands: [
     { label: "Até 21", min: 0, max: 21 }, { label: "22 a 25", min: 22, max: 25 },

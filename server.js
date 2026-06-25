@@ -2,6 +2,7 @@ import express from "express";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import db from "./db.js";
+import { DEFAULT_QUESTIONS } from "./db.js";
 import { scorePrediction, RULES } from "./scoring.js";
 import { validateDocument } from "./validators.js";
 import { liveEnabled, liveProvider, fetchFixture } from "./live.js";
@@ -277,7 +278,7 @@ app.post("/api/admin/matches", requireAdmin, (req, res) => {
   if (!homeTeam || !awayTeam) {
     return res.status(400).json({ error: "Informe os dois times." });
   }
-  const q = Array.isArray(questions) ? JSON.stringify(questions) : "[]";
+  const q = Array.isArray(questions) && questions.length ? JSON.stringify(questions) : JSON.stringify(DEFAULT_QUESTIONS);
   const cat = category === "others" ? "others" : "brazil";
   const info = db
     .prepare(

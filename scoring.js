@@ -1,13 +1,12 @@
-// Pontuação do bolão: placar por proximidade + perguntas especiais.
-// O placar exato é a nota máxima; os demais critérios somam entre si.
-// Cada pergunta especial tem seus próprios pontos (ver scoreQuestions).
+// Pontuação do bolão: placar + perguntas especiais.
+//  - Placar EXATO ............ 12 pts
+//  - Resultado (quem vence/empate) .. 5 pts
+//  - Cada acerto em pergunta especial .. 2 pts (fixo)
 
 export const RULES = {
   EXACT: 12,
   RESULT: 5,
-  GOAL_DIFF: 3,
-  TEAM_GOALS: 1,
-  SPECIAL: 2, // cada acerto nas perguntas especiais vale isto (fixo)
+  SPECIAL: 2,
 };
 
 const sign = (n) => (n > 0 ? 1 : n < 0 ? -1 : 0);
@@ -69,11 +68,8 @@ export function scorePrediction(pred, official) {
   let points = 0;
   if (pHome === oHome && pAway === oAway) {
     points += RULES.EXACT;
-  } else {
-    if (sign(pHome - pAway) === sign(oHome - oAway)) points += RULES.RESULT;
-    if (pHome - pAway === oHome - oAway) points += RULES.GOAL_DIFF;
-    if (pHome === oHome) points += RULES.TEAM_GOALS;
-    if (pAway === oAway) points += RULES.TEAM_GOALS;
+  } else if (sign(pHome - pAway) === sign(oHome - oAway)) {
+    points += RULES.RESULT;
   }
 
   points += scoreQuestions(official.questions, official.answers, pred.answers);

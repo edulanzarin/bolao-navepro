@@ -155,7 +155,7 @@ function renderStats(m) {
 
   let html = "";
   if (hasResult) {
-    const live = liveEnabled && isLive(m) && m.status !== "finished";
+    const live = isLive(m) && m.status !== "finished";
     html += `<div class="res-score">
       <div class="res-team"><div class="flag">${flagHTML(m.home_flag)}</div><span>${escapeHTML(m.home_team)}</span></div>
       <div class="res-mid">
@@ -339,13 +339,10 @@ async function renderRules() {
     RULES_DATA = { ...RULES_DATA, ...r };
     $("#tiers").innerHTML = `
       <div class="tier"><div class="tier-pts">${r.EXACT}</div><div class="tier-name">Placar exato</div><p>Cravou o placar certinho? Pontuação máxima.</p></div>
-      <div class="tier"><div class="tier-pts">${r.RESULT}</div><div class="tier-name">Resultado certo</div><p>Acertou quem venceu (ou o empate).</p></div>
-      <div class="tier"><div class="tier-pts">${r.GOAL_DIFF}</div><div class="tier-name">Saldo de gols</div><p>Acertou a diferença de gols entre as equipes.</p></div>
-      <div class="tier"><div class="tier-pts">${r.TEAM_GOALS}</div><div class="tier-name">Gols por equipe</div><p>Por equipe cujo número de gols você acertou.</p></div>
+      <div class="tier"><div class="tier-pts">${r.RESULT}</div><div class="tier-name">Quem ganha</div><p>Acertou o vencedor (ou o empate), mas não o placar.</p></div>
       <div class="tier tier-special"><div class="tier-pts">+${r.SPECIAL}</div><div class="tier-name">Cada pergunta especial</div><p>Marcador, faltas, escanteios, cartões... cada acerto vale ${r.SPECIAL} pts.</p></div>`;
     $("#rulesFoot").innerHTML =
-      `Placar exato <strong>${r.EXACT}</strong> · Resultado <strong>${r.RESULT}</strong> · ` +
-      `Saldo <strong>${r.GOAL_DIFF}</strong> · Gols por equipe <strong>${r.TEAM_GOALS}</strong> · cada pergunta especial <strong>+${r.SPECIAL}</strong>`;
+      `Placar exato <strong>${r.EXACT}</strong> · Quem ganha <strong>${r.RESULT}</strong> · cada pergunta especial <strong>+${r.SPECIAL}</strong>`;
   } catch {}
 }
 
@@ -453,7 +450,7 @@ async function renderMatch() {
 
   const chip = $("#statusChip");
   if (m.status === "finished") { chip.textContent = "Jogo encerrado"; chip.className = "status-chip closed"; }
-  else if (liveEnabled && isLive(m)) { chip.innerHTML = "AO VIVO"; chip.className = "status-chip live"; }
+  else if (isLive(m)) { chip.textContent = "AO VIVO"; chip.className = "status-chip live"; }
   else if (locked) { chip.textContent = "Palpites encerrados"; chip.className = "status-chip closed"; }
   else { chip.textContent = "Palpites abertos"; chip.className = "status-chip"; }
 
@@ -461,7 +458,7 @@ async function renderMatch() {
   renderStats(m);
 
   // mostra o minuto no selo AO VIVO, se a integração trouxer
-  if (liveEnabled && isLive(m) && m.status !== "finished" && currentDetail.stats && currentDetail.stats.minute) {
+  if (isLive(m) && m.status !== "finished" && currentDetail.stats && currentDetail.stats.minute) {
     const min = String(currentDetail.stats.minute);
     chip.innerHTML = `AO VIVO · ${escapeHTML(min)}${/^\d+$/.test(min) ? "'" : ""}`;
     chip.className = "status-chip live";
