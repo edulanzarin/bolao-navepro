@@ -437,6 +437,11 @@ h1, h2, h3, .hero-title, .section-title { font-family: "Sora", sans-serif; }
 .qe-opt { display: flex; gap: 6px; align-items: center; }
 .qe-opt-input { flex: 1; padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--navy-950); color: #fff; font-family: inherit; font-size: 13px; }
 .qbuilder-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
+.qe-band-list { display: grid; gap: 8px; margin-bottom: 8px; }
+.qe-band { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.qe-band input { padding: 8px 10px; border-radius: 9px; border: 1px solid var(--line); background: var(--navy-950); color: #fff; font-family: inherit; font-size: 13px; }
+.qe-band-label { flex: 1 1 160px; }
+.qe-band-min, .qe-band-max { width: 96px; }
 .card-title {
   font-size: 17px; letter-spacing: 0.5px; margin-bottom: 18px;
   padding-bottom: 12px; border-bottom: 1px solid var(--line); color: #fff; font-weight: 700;
@@ -595,3 +600,81 @@ h1, h2, h3, .hero-title, .section-title { font-family: "Sora", sans-serif; }
   .prize .place { font-size: 13px; }
   .prize .reward { font-size: 13px; }
 }
+
+/* ---------- BANNER DINÂMICO DO JOGO ---------- */
+.match-banner {
+  position: relative; border-radius: 16px; overflow: hidden; margin-bottom: 22px;
+  min-height: 210px; display: grid; place-items: center;
+  background: linear-gradient(135deg, var(--navy-800), var(--navy-950));
+  border: 1px solid var(--line);
+}
+.mb-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0.38; }
+.mb-overlay {
+  position: absolute; inset: 0;
+  background:
+    radial-gradient(120% 120% at 50% 0%, rgba(63,155,255,0.18), transparent 55%),
+    linear-gradient(180deg, rgba(5,13,34,0.35), rgba(5,13,34,0.88));
+}
+.mb-content { position: relative; z-index: 1; text-align: center; padding: 26px 18px; width: 100%; }
+.mb-kicker { font-size: 11px; letter-spacing: 3px; color: var(--gold-soft); font-weight: 700; text-transform: uppercase; }
+.mb-teams { display: flex; align-items: center; justify-content: center; gap: 28px; margin: 18px 0 12px; flex-wrap: wrap; }
+.mb-team { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.mb-team span { font-family: "Sora", sans-serif; font-weight: 800; font-size: 18px; letter-spacing: 1px; }
+.mb-flag {
+  width: 92px; height: 92px; border-radius: 50%; overflow: hidden; display: grid; place-items: center;
+  border: 3px solid rgba(255,255,255,0.18); box-shadow: 0 14px 32px rgba(0,0,0,0.55);
+  background: rgba(255,255,255,0.06); font-size: 46px;
+}
+.mb-flag img { width: 100%; height: 100%; object-fit: cover; }
+.mb-center { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.mb-vs { font-family: "Sora", sans-serif; font-weight: 800; font-size: 22px; color: #fff; opacity: 0.92; }
+.mb-meta { display: block; font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+/* tabela de pontos mais robusta */
+.tier { position: relative; overflow: hidden; }
+.tier::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold), var(--blue)); opacity: 0.85; }
+.tier-pts { font-size: 40px; line-height: 1; }
+
+@media (max-width: 600px) {
+  .match-banner { min-height: 170px; }
+  .mb-teams { gap: 16px; }
+  .mb-flag { width: 64px; height: 64px; font-size: 32px; }
+  .mb-team span { font-size: 14px; }
+  .mb-vs { font-size: 18px; }
+}
+
+/* ---------- CONTADOR DENTRO DO CARD ---------- */
+.banner-countdown { margin: 0 0 22px; }
+.banner-countdown .countdown-label { text-align: center; }
+.banner-countdown .countdown-units { justify-content: center; }
+
+/* ---------- PAINEL DE RESULTADO ---------- */
+.res-score { display: flex; align-items: center; justify-content: center; gap: 26px; padding: 6px 0 16px; flex-wrap: wrap; }
+.res-team { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.res-team .flag { width: 60px; height: 60px; }
+.res-team span { font-weight: 700; font-size: 14px; }
+.res-mid { display: flex; flex-direction: column; align-items: center; gap: 9px; }
+.res-nums { font-family: "Sora", sans-serif; font-size: 42px; font-weight: 800; line-height: 1; }
+.res-nums i { color: var(--gold); font-style: normal; }
+.res-tag { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); border: 1px solid var(--line); padding: 4px 12px; border-radius: 999px; }
+.res-tag.live { color: #fca5a5; border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.12); }
+.res-scorers { display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--gold-soft); font-weight: 600; font-size: 14px; padding: 14px 0 4px; border-top: 1px solid var(--line); margin-top: 4px; }
+.res-scorers .ic { color: var(--gold); flex: none; }
+.stat-block { display: grid; gap: 14px; margin-top: 18px; }
+.stat-nums em { display: inline-flex; align-items: center; gap: 6px; }
+.stat-nums em .ic { width: 15px; height: 15px; color: var(--blue-soft); }
+.hint-center { text-align: center; color: var(--muted); font-size: 13px; margin-top: 10px; }
+.tier-special::before { background: linear-gradient(90deg, var(--gold), var(--gold-soft)); }
+
+/* ---------- ADMIN: ESPAÇAMENTO/ORDEM ---------- */
+.admin-match { padding: 22px; margin-bottom: 20px; }
+.admin-match .block-label { margin: 22px 0 12px; padding-top: 16px; border-top: 1px solid var(--line); }
+.admin-match-head { margin-bottom: 6px; }
+.result-block { margin-top: 18px; }
+.admin-actions { margin-top: 14px; gap: 10px; }
+.admin-preds { margin-top: 18px; }
+.admin-preds summary { padding: 10px 0; }
+.qbuilder { gap: 14px; margin-bottom: 6px; }
+.admin-grid { gap: 6px 18px; }
+
+.qe-fixed { font-size: 12px; color: var(--gold-soft); font-weight: 700; white-space: nowrap; padding: 0 6px; }

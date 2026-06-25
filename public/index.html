@@ -36,19 +36,6 @@
         <p class="hero-sub" id="heroSub">Acerte o placar, crave o marcador e suba no ranking.</p>
         <p class="hero-note"><svg class="ic ic-inline" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>1 palpite por participante (por CPF/CNPJ) · <span id="lockNote">encerra 10 min antes do jogo</span></p>
 
-        <div class="countdown" id="countdown" aria-live="polite">
-          <p class="countdown-label" id="countdownLabel">Tempo para encerrar os palpites</p>
-          <div class="countdown-units">
-            <div class="cd-unit"><strong id="cdDays">00</strong><span>dias</span></div>
-            <i>:</i>
-            <div class="cd-unit"><strong id="cdHours">00</strong><span>horas</span></div>
-            <i>:</i>
-            <div class="cd-unit"><strong id="cdMin">00</strong><span>min</span></div>
-            <i>:</i>
-            <div class="cd-unit"><strong id="cdSec">00</strong><span>seg</span></div>
-          </div>
-        </div>
-
         <ul class="prizes" id="prizes"></ul>
 
         <a class="btn-gold hero-cta" href="#palpite">Fazer meu palpite</a>
@@ -86,17 +73,34 @@
       <h2 class="section-title">Seu <span class="accent-gold">palpite</span></h2>
 
       <div class="card palpite-card">
-        <div class="match-head">
-          <div class="match-head-info">
-            <span class="mh-kicker" id="mhKicker">COPA DO MUNDO 2026</span>
-            <span class="mh-title">
-              <span class="mh-flag" id="mhHomeFlag"></span>
-              <span id="mhTitle">Brasil x Escócia</span>
-              <span class="mh-flag" id="mhAwayFlag"></span>
-            </span>
-            <span class="mh-meta" id="mhMeta"></span>
+        <div class="match-banner">
+          <video class="mb-video" autoplay muted loop playsinline preload="auto"
+            onerror="this.remove()">
+            <source src="assets/match-bg.mp4" type="video/mp4" />
+          </video>
+          <div class="mb-overlay"></div>
+          <div class="mb-content">
+            <span class="mb-kicker" id="mhKicker">COPA DO MUNDO 2026</span>
+            <div class="mb-teams">
+              <div class="mb-team"><div class="mb-flag" id="bHomeFlag"></div><span id="bHome">BRASIL</span></div>
+              <div class="mb-center"><span class="mb-vs">VS</span><span class="status-chip" id="statusChip">Palpites abertos</span></div>
+              <div class="mb-team"><div class="mb-flag" id="bAwayFlag"></div><span id="bAway">ESCÓCIA</span></div>
+            </div>
+            <span class="mb-meta" id="bMeta"></span>
           </div>
-          <span class="status-chip" id="statusChip">Palpites abertos</span>
+        </div>
+
+        <div class="countdown banner-countdown" id="countdown" aria-live="polite">
+          <p class="countdown-label" id="countdownLabel">Tempo para encerrar os palpites</p>
+          <div class="countdown-units">
+            <div class="cd-unit"><strong id="cdDays">00</strong><span>dias</span></div>
+            <i>:</i>
+            <div class="cd-unit"><strong id="cdHours">00</strong><span>horas</span></div>
+            <i>:</i>
+            <div class="cd-unit"><strong id="cdMin">00</strong><span>min</span></div>
+            <i>:</i>
+            <div class="cd-unit"><strong id="cdSec">00</strong><span>seg</span></div>
+          </div>
         </div>
 
         <div id="lockedNotice" class="locked-notice" hidden><svg class="ic ic-inline" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>Os palpites para esta partida estão encerrados.</div>
@@ -190,15 +194,15 @@
           </div>
 
           <p class="form-msg" id="formMsg"></p>
-          <p class="form-hint">Confira tudo antes de enviar: o palpite é <strong>único por CPF/CNPJ</strong> e <strong>não pode ser alterado</strong> depois de enviado.</p>
+          <p class="form-hint">Você pode <strong>alterar seu palpite</strong> reenviando com o mesmo CPF/CNPJ, até <strong>1h antes do jogo</strong>. Depois disso, fica travado.</p>
         </form>
       </div>
     </section>
 
-    <!-- ESTATÍSTICAS -->
+    <!-- RESULTADO + ESTATÍSTICAS -->
     <section class="container section" id="statsSection" hidden>
-      <p class="section-kicker">Estatísticas</p>
-      <h2 class="section-title">Números da <span class="accent-blue">partida</span></h2>
+      <p class="section-kicker">Resultado</p>
+      <h2 class="section-title">Resultado <span class="accent-blue">e estatísticas</span></h2>
       <div class="card" id="statsCard"></div>
     </section>
 
@@ -215,7 +219,6 @@
           </div>
           <span class="live-dot">ao vivo</span>
         </div>
-        <div class="result-banner" id="resultBanner" hidden></div>
         <div id="rankingWrap"></div>
         <p class="ranking-foot" id="rulesFoot"></p>
       </div>

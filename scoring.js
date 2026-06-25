@@ -7,6 +7,7 @@ export const RULES = {
   RESULT: 5,
   GOAL_DIFF: 3,
   TEAM_GOALS: 1,
+  SPECIAL: 2, // cada acerto nas perguntas especiais vale isto (fixo)
 };
 
 const sign = (n) => (n > 0 ? 1 : n < 0 ? -1 : 0);
@@ -14,6 +15,7 @@ const norm = (s) => String(s).trim().toLowerCase();
 
 export function scoreQuestions(questions, official, answers) {
   let pts = 0;
+  const PER = RULES.SPECIAL; // pontos fixos por acerto especial
   for (const q of questions || []) {
     const ov = official ? official[q.id] : undefined;
     const pv = answers ? answers[q.id] : undefined;
@@ -27,17 +29,21 @@ export function scoreQuestions(questions, official, answers) {
       let hits = 0;
       for (const g of guesses) if (off.includes(g)) hits++;
       const cap = q.max || guesses.length;
-      pts += Math.min(hits, cap) * (q.points || 0);
+      pts += Math.min(hits, cap) * PER;
     } else if (q.type === "number") {
       const o = Number(ov);
       const p = Number(pv);
-      if (Number.isFinite(o) && Number.isFinite(p)) {
-        if (p === o) pts += q.points || 0;
-        else if (Math.abs(p - o) === 1) pts += Math.ceil((q.points || 0) / 2);
+      if (Number.isFinite(o) && Number.isFinite(p) && p === o) pts += PER;
+    } else if (q.type === "range") {
+      const n = Number(ov);
+      if (Number.isFinite(n) && pv != null) {
+        const band = (q.bands || []).find(
+          (b) => n >= (b.min ?? -Infinity) && n <= (b.max == null ? Infinity : b.max)
+        );
+        if (band && norm(pv) === norm(band.label)) pts += PER;
       }
     } else {
-      // choice / texto
-      if (pv !== undefined && pv !== null && norm(pv) === norm(ov)) pts += q.points || 0;
+      if (pv !== undefined && pv !== null && norm(pv) === norm(ov)) pts += PER;
     }
   }
   return pts;

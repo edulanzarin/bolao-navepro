@@ -137,8 +137,9 @@ app.get("/api/matches/:id", (req, res) => {
   res.json({ ...match, predictions });
 });
 
-// sanitiza as respostas das perguntas conforme a definição da partida
-function sanitizeAnswers(questions, raw) {
+// sanitiza as respostas das perguntas conforme a definição da partida.
+// official=true → respostas do organizador (faixa vira número real digitado).
+function sanitizeAnswers(questions, raw, official = false) {
   const out = {};
   for (const q of questions || []) {
     const v = raw ? raw[q.id] : undefined;
@@ -152,6 +153,14 @@ function sanitizeAnswers(questions, raw) {
     } else if (q.type === "number") {
       const n = Number(v);
       if (Number.isInteger(n) && n >= 0 && n <= (q.max || 100)) out[q.id] = n;
+    } else if (q.type === "range") {
+      if (official) {
+        const n = Number(v);
+        if (Number.isInteger(n) && n >= 0 && n <= 999) out[q.id] = n;
+      } else {
+        const s = String(v).trim();
+        if ((q.bands || []).some((b) => b.label === s)) out[q.id] = s;
+      }
     } else {
       const s = String(v).trim();
       if (!q.options || q.options.includes(s)) out[q.id] = s;
@@ -199,30 +208,34 @@ app.post("/api/predictions", (req, res) => {
     return res.status(403).json({ error: "Os palpites para esta partida estão encerrados." });
   }
   if (match.lock_at && new Date() >= new Date(match.lock_at)) {
-    return res.status(403).json({ error: "O tempo para palpitar nesta partida acabou." });
+    return res.status(403).json({ error: "O prazo para enviar ou alterar o palpite já encerrou." });
   }
 
-  const ans = JSON.stringify(sanitizeAnswers(match.questions, answers));
+  const ans = JSON.stringify(sanitizeAnswers(match.questions, answers, false));
 
   const existing = db
     .prepare("SELECT id FROM predictions WHERE match_id = ? AND document = ?")
     .get(matchId, doc.normalized);
-  if (existing) {
-    return res.status(409).json({
-      error: "Este CPF/CNPJ já enviou um palpite para este jogo. O palpite é único e não pode ser alterado.",
-    });
-  }
 
   try {
-    db.prepare(
-      "INSERT INTO predictions (match_id, participant, document, doc_type, email, phone, home_score, away_score, answers) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
-    ).run(matchId, name, doc.normalized, doc.type, mail, tel, h, a, ans);
+    db.prepare(`
+      INSERT INTO predictions (match_id, participant, document, doc_type, email, phone, home_score, away_score, answers)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(match_id, document) DO UPDATE SET
+        participant = excluded.participant,
+        doc_type    = excluded.doc_type,
+        email       = excluded.email,
+        phone       = excluded.phone,
+        home_score  = excluded.home_score,
+        away_score  = excluded.away_score,
+        answers     = excluded.answers
+    `).run(matchId, name, doc.normalized, doc.type, mail, tel, h, a, ans);
   } catch (e) {
     return res.status(400).json({ error: "Não foi possível salvar o palpite." });
   }
 
   recalcMatchPoints(matchId);
-  res.json({ ok: true });
+  res.json({ ok: true, updated: !!existing });
 });
 
 // Ranking acumulado: soma os pontos de cada participante (1 linha por CPF/CNPJ).
@@ -330,7 +343,7 @@ app.put("/api/admin/matches/:id/status", requireAdmin, (req, res) => {
 
 // Lançar resultado oficial + respostas das perguntas (recalcula a pontuação)
 app.put("/api/admin/matches/:id/result", requireAdmin, (req, res) => {
-  const { homeScore, awayScore, answers, finish } = req.body || {};
+  const { homeScore, awayScore, answers, stats, finish } = req.body || {};
   const match = parseMatch(db.prepare("SELECT * FROM matches WHERE id = ?").get(req.params.id));
   if (!match) return res.status(404).json({ error: "Partida não encontrada." });
 
@@ -340,12 +353,13 @@ app.put("/api/admin/matches/:id/result", requireAdmin, (req, res) => {
     return res.status(400).json({ error: "Placar oficial inválido." });
   }
 
-  // respostas oficiais: aceita o mesmo formato dos palpites
-  const official = sanitizeAnswers(match.questions, answers || {});
+  // respostas oficiais: faixas viram o número real digitado pelo organizador
+  const official = sanitizeAnswers(match.questions, answers || {}, true);
+  const newStats = stats && typeof stats === "object" ? { ...match.stats, ...stats } : match.stats;
 
   db.prepare(
-    "UPDATE matches SET home_score = ?, away_score = ?, answers = ?, status = ? WHERE id = ?"
-  ).run(h, a, JSON.stringify(official), finish ? "finished" : match.status, match.id);
+    "UPDATE matches SET home_score = ?, away_score = ?, answers = ?, stats = ?, status = ? WHERE id = ?"
+  ).run(h, a, JSON.stringify(official), JSON.stringify(newStats), finish ? "finished" : match.status, match.id);
 
   recalcMatchPoints(match.id);
   res.json({ ok: true });

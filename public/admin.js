@@ -127,7 +127,7 @@ $("#createBtn").addEventListener("click", async () => {
 });
 
 /* ----------------------- CONSTRUTOR DE PERGUNTAS ----------------------- */
-const QTYPES = { players: "Jogadores (marcadores)", number: "Número", choice: "Múltipla escolha" };
+const QTYPES = { players: "Jogadores (marcadores)", range: "Faixas (você digita o nº no fim)", number: "Número exato", choice: "Múltipla escolha" };
 const STAT_FIELDS = [["possession", "Posse %"], ["shots", "Finalizações"], ["corners", "Escanteios"], ["fouls", "Faltas"], ["yellow", "Cartões amarelos"]];
 
 function gatherStats(mid) {
@@ -158,6 +158,18 @@ function buildExtra(extra, type, q) {
   } else if (type === "number") {
     extra.innerHTML = `<label class="qe-mini"><span>Valor máximo</span><input class="qe-max" type="number" min="1" value="${q.max || 20}" /></label>
       <span class="qe-help">Acerto exato vale os pontos; errar por 1 vale metade.</span>`;
+  } else if (type === "range") {
+    const wrap = document.createElement("div"); wrap.className = "qe-bands";
+    const list = document.createElement("div"); list.className = "qe-band-list";
+    const bands = q.bands && q.bands.length ? q.bands : [{}, {}];
+    bands.forEach((b) => list.appendChild(bandRow(b)));
+    const add = document.createElement("button");
+    add.type = "button"; add.className = "btn-ghost mini"; add.textContent = "+ faixa";
+    add.addEventListener("click", () => list.appendChild(bandRow({})));
+    const help = document.createElement("span"); help.className = "qe-help";
+    help.textContent = "O participante escolhe a faixa. No fim do jogo você digita o número real e o sistema acha a faixa certa.";
+    wrap.append(list, add, help);
+    extra.appendChild(wrap);
   } else {
     const wrap = document.createElement("div"); wrap.className = "qe-opts";
     const list = document.createElement("div"); list.className = "qe-opt-list";
@@ -171,6 +183,17 @@ function buildExtra(extra, type, q) {
   }
 }
 
+function bandRow(b = {}) {
+  const row = document.createElement("div");
+  row.className = "qe-band";
+  row.innerHTML = `<input class="qe-band-label" value="${escapeHTML(b.label || "")}" placeholder="Rótulo (ex: 22 a 25)" />
+    <input class="qe-band-min" type="number" value="${b.min ?? ""}" placeholder="mín" />
+    <input class="qe-band-max" type="number" value="${b.max ?? ""}" placeholder="máx (vazio = ∞)" />
+    <button type="button" class="btn-ghost danger mini">×</button>`;
+  row.querySelector("button").addEventListener("click", () => row.remove());
+  return row;
+}
+
 function makeQEditor(q = {}) {
   const el = document.createElement("div");
   el.className = "q-editor";
@@ -179,7 +202,7 @@ function makeQEditor(q = {}) {
     <div class="qe-row">
       <select class="qe-type">${Object.entries(QTYPES).map(([v, l]) => `<option value="${v}">${l}</option>`).join("")}</select>
       <input class="qe-label" placeholder="Texto da pergunta" />
-      <input class="qe-points" type="number" min="0" placeholder="pts" />
+      <span class="qe-fixed">vale 2 pts</span>
       <button type="button" class="btn-ghost danger mini qe-remove">remover</button>
     </div>
     <div class="qe-extra"></div>`;
@@ -187,7 +210,6 @@ function makeQEditor(q = {}) {
   const extra = el.querySelector(".qe-extra");
   typeSel.value = q.type || "players";
   el.querySelector(".qe-label").value = q.label || "";
-  el.querySelector(".qe-points").value = q.points ?? 3;
   buildExtra(extra, typeSel.value, q);
   typeSel.addEventListener("change", () => buildExtra(extra, typeSel.value, {}));
   el.querySelector(".qe-remove").addEventListener("click", () => el.remove());
@@ -199,14 +221,21 @@ function serializeQuestions(mid) {
   document.querySelectorAll(`#qbuilder-${mid} .q-editor`).forEach((el) => {
     const type = el.querySelector(".qe-type").value;
     const label = el.querySelector(".qe-label").value.trim();
-    const points = Number(el.querySelector(".qe-points").value) || 0;
+    const points = 2; // pontuação fixa por acerto especial
     if (!label) return;
     const q = { id: el.dataset.qid, type, label, points };
     if (type === "players") q.max = Number(el.querySelector(".qe-max").value) || 5;
     else if (type === "number") { const mx = Number(el.querySelector(".qe-max").value); if (mx) q.max = mx; }
-    else {
+    else if (type === "range") {
+      q.bands = [...el.querySelectorAll(".qe-band")].map((r) => ({
+        label: r.querySelector(".qe-band-label").value.trim(),
+        min: r.querySelector(".qe-band-min").value === "" ? null : Number(r.querySelector(".qe-band-min").value),
+        max: r.querySelector(".qe-band-max").value === "" ? null : Number(r.querySelector(".qe-band-max").value),
+      })).filter((b) => b.label);
+      if (q.bands.length < 2) return;
+    } else {
       q.options = [...el.querySelectorAll(".qe-opt-input")].map((i) => i.value.trim()).filter(Boolean);
-      if (q.options.length < 2) return; // múltipla escolha precisa de pelo menos 2
+      if (q.options.length < 2) return;
     }
     out.push(q);
   });
@@ -221,8 +250,9 @@ function answerField(mid, q, answers) {
     return `<label class="field mini grow"><span>${escapeHTML(q.label)} <small>(quem marcou, por vírgula)</small></span>
       <input type="text" list="squadList" id="qa-${mid}-${q.id}" value="${escapeHTML(val)}" placeholder="Vinícius Jr., Raphinha" /></label>`;
   }
-  if (q.type === "number") {
-    return `<label class="field mini"><span>${escapeHTML(q.label)}</span>
+  if (q.type === "number" || q.type === "range") {
+    const hint = q.type === "range" ? " <small>(nº real)</small>" : "";
+    return `<label class="field mini"><span>${escapeHTML(q.label)}${hint}</span>
       <input type="number" min="0" id="qa-${mid}-${q.id}" value="${cur ?? ""}" /></label>`;
   }
   const opts = (q.options || []).map((o) => `<option ${String(cur) === String(o) ? "selected" : ""}>${escapeHTML(o)}</option>`).join("");
@@ -237,7 +267,7 @@ function gatherAnswers(mid) {
     if (q.type === "players") {
       const arr = el.value.split(",").map((s) => s.trim()).filter(Boolean);
       if (arr.length) ans[q.id] = arr;
-    } else if (q.type === "number") {
+    } else if (q.type === "number" || q.type === "range") {
       if (el.value !== "") ans[q.id] = Number(el.value);
     } else if (el.value) ans[q.id] = el.value;
   }
@@ -284,17 +314,7 @@ async function loadMatches() {
       </div>
       <p class="hint-text">Os palpites encerram sozinhos no horário acima — não precisa travar na mão.</p>
 
-      <details class="admin-preds">
-        <summary>Estatísticas (preenchimento manual — ou automático com a API)</summary>
-        <div class="admin-row">
-          ${STAT_FIELDS.map(([k, label]) => `
-            <label class="field mini"><span>${label} · ${escapeHTML(m.home_team)}</span><input type="number" min="0" id="st-${m.id}-${k}Home" value="${detail.stats?.[k + "Home"] ?? ""}" /></label>
-            <label class="field mini"><span>${label} · ${escapeHTML(m.away_team)}</span><input type="number" min="0" id="st-${m.id}-${k}Away" value="${detail.stats?.[k + "Away"] ?? ""}" /></label>`).join("")}
-        </div>
-        <button class="btn-ghost mini" data-act="savemeta" data-id="${m.id}">Salvar dados e estatísticas</button>
-      </details>
-
-      <p class="block-label">Perguntas especiais</p>
+      <p class="block-label">Perguntas especiais <small style="color:var(--muted);font-weight:500;">· cada acerto vale 2 pts</small></p>
       <div id="qbuilder-${m.id}" class="qbuilder"></div>
       <div class="qbuilder-actions">
         <button class="btn-ghost mini" data-act="addq" data-id="${m.id}">+ Adicionar pergunta</button>
@@ -308,6 +328,12 @@ async function loadMatches() {
       </div>
       <div class="admin-row">
         ${(detail.questions || []).map((q) => answerField(m.id, q, detail.answers)).join("") || '<span class="hint-text">Nenhuma pergunta especial nesta partida.</span>'}
+      </div>
+      <p class="hint-text">Estatísticas (opcional · ou automático com a API)</p>
+      <div class="admin-row">
+        ${STAT_FIELDS.map(([k, label]) => `
+          <label class="field mini"><span>${label} · ${escapeHTML(m.home_team)}</span><input type="number" min="0" id="st-${m.id}-${k}Home" value="${detail.stats?.[k + "Home"] ?? ""}" /></label>
+          <label class="field mini"><span>${label} · ${escapeHTML(m.away_team)}</span><input type="number" min="0" id="st-${m.id}-${k}Away" value="${detail.stats?.[k + "Away"] ?? ""}" /></label>`).join("")}
       </div>
       <div class="admin-actions">
         <button class="btn-gold mini" data-act="save-result" data-id="${m.id}">Salvar resultado</button>
@@ -393,7 +419,7 @@ async function handleAction(act, id) {
       if (h === "" || a === "") { alert("Informe o placar oficial (gols dos dois times)."); return; }
       await api(`/api/admin/matches/${id}/result`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ homeScore: h, awayScore: a, answers: gatherAnswers(id), finish: act === "finish" }),
+        body: JSON.stringify({ homeScore: h, awayScore: a, answers: gatherAnswers(id), stats: gatherStats(id), finish: act === "finish" }),
       });
     } else if (act === "reopen") {
       await api(`/api/admin/matches/${id}/status`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ status: "open" }) });

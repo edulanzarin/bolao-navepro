@@ -90,9 +90,18 @@ if (!db.prepare("SELECT data FROM settings WHERE id = 1").get()) {
 /* ---- Perguntas especiais padrão para a partida inicial ---- */
 const DEFAULT_QUESTIONS = [
   { id: "scorers", type: "players", label: "Quem marca gol pelo Brasil?", points: 3, max: 3 },
-  { id: "fouls", type: "choice", label: "Quantas faltas na partida?", points: 3, options: ["Até 21", "22 a 25", "26 a 29", "30 ou mais"] },
-  { id: "corners", type: "choice", label: "Total de escanteios?", points: 3, options: ["Até 6", "7 a 9", "10 a 12", "13 ou mais"] },
-  { id: "yellowCards", type: "choice", label: "Cartões amarelos no jogo?", points: 2, options: ["0 a 2", "3 a 4", "5 a 6", "7 ou mais"] },
+  { id: "fouls", type: "range", label: "Faltas na partida", points: 3, bands: [
+    { label: "Até 21", min: 0, max: 21 }, { label: "22 a 25", min: 22, max: 25 },
+    { label: "26 a 29", min: 26, max: 29 }, { label: "30 ou mais", min: 30, max: null },
+  ] },
+  { id: "corners", type: "range", label: "Total de escanteios", points: 3, bands: [
+    { label: "Até 6", min: 0, max: 6 }, { label: "7 a 9", min: 7, max: 9 },
+    { label: "10 a 12", min: 10, max: 12 }, { label: "13 ou mais", min: 13, max: null },
+  ] },
+  { id: "yellowCards", type: "range", label: "Cartões amarelos no jogo", points: 2, bands: [
+    { label: "0 a 2", min: 0, max: 2 }, { label: "3 a 4", min: 3, max: 4 },
+    { label: "5 a 6", min: 5, max: 6 }, { label: "7 ou mais", min: 7, max: null },
+  ] },
 ];
 
 if (db.prepare("SELECT COUNT(*) AS n FROM matches").get().n === 0) {
@@ -105,7 +114,7 @@ if (db.prepare("SELECT COUNT(*) AS n FROM matches").get().n === 0) {
     "https://flagcdn.com/w320/br.png",
     "https://flagcdn.com/w320/gb-sct.png",
     "2026-06-24T19:00:00-03:00",
-    "2026-06-24T18:50:00-03:00",
+    "2026-06-24T18:00:00-03:00",
     "Hard Rock Stadium · Miami",
     JSON.stringify(DEFAULT_QUESTIONS)
   );

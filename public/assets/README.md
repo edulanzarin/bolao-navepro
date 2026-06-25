@@ -6,3 +6,5 @@ Coloque aqui as imagens do bolão. Para trocar, basta substituir o arquivo mante
 - `logo.png` — logo da empresa no cabeçalho. Se o arquivo existir, ele aparece no lugar do texto "NAVEPRO" (vale para a página principal e o painel).
 
 Bandeiras/escudos dos times são definidos por partida no painel do organizador (campo de bandeira aceita URL de imagem ou emoji).
+
+- `match-bg.mp4` (opcional) — vídeo de fundo do banner do jogo (ex.: estádio/torcida). Se o arquivo existir, toca em loop, mudo, atrás das bandeiras. Sem ele, fica um fundo degradê animado. Use um vídeo curto e leve (alguns MB), proporção paisagem.

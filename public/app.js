@@ -15,8 +15,15 @@ const ICONS = {
   trophy: '<svg class="ic" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>',
   medal: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="6"/><path d="M15.48 12.89 17 22l-5-3-5 3 1.52-9.11"/></svg>',
   check: '<svg class="ic" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>',
+  ball: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m12 7 3.1 2.3-1.2 3.7h-3.8L8.9 9.3 12 7Z"/></svg>',
+  flag: '<svg class="ic" viewBox="0 0 24 24"><path d="M4 22V3"/><path d="M4 4h13l-2.2 4L17 12H4"/></svg>',
+  card: '<svg class="ic" viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2"/></svg>',
+  whistle: '<svg class="ic" viewBox="0 0 24 24"><circle cx="8" cy="14" r="6"/><path d="M14 11.5 21 8M14 14h7"/></svg>',
+  percent: '<svg class="ic" viewBox="0 0 24 24"><line x1="19" y1="5" x2="5" y2="19"/><circle cx="6.5" cy="6.5" r="2.5"/><circle cx="17.5" cy="17.5" r="2.5"/></svg>',
+  target: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>',
 };
 const icon = (n) => ICONS[n] || "";
+let RULES_DATA = { EXACT: 12, RESULT: 5, GOAL_DIFF: 3, TEAM_GOALS: 1, SPECIAL: 2 };
 
 const fmtFull = (iso) => {
   if (!iso) return "A definir";
@@ -126,31 +133,54 @@ document.addEventListener("click", (e) => {
   updateChipAdd(cont);
 });
 
-/* ---------- estatísticas da partida ---------- */
+/* ---------- resultado + estatísticas da partida ---------- */
 const STAT_ROWS = [
-  ["possession", "Posse de bola", "%"],
-  ["shots", "Finalizações", ""],
-  ["corners", "Escanteios", ""],
-  ["fouls", "Faltas", ""],
-  ["yellow", "Cartões amarelos", ""],
+  ["possession", "Posse de bola", "%", "percent"],
+  ["shots", "Finalizações", "", "target"],
+  ["corners", "Escanteios", "", "flag"],
+  ["fouls", "Faltas", "", "whistle"],
+  ["yellow", "Cartões amarelos", "", "card"],
 ];
 function renderStats(m) {
   const sec = $("#statsSection");
   const card = $("#statsCard");
-  const s = (currentDetail && currentDetail.stats) || {};
-  const rows = STAT_ROWS.filter(([k]) => s[k + "Home"] != null || s[k + "Away"] != null);
-  if (!rows.length) { sec.hidden = true; return; }
+  const d = currentDetail || {};
+  const s = d.stats || {};
+  const hasResult = d.home_score !== null && d.home_score !== undefined;
+  const statRows = STAT_ROWS.filter(([k]) => s[k + "Home"] != null || s[k + "Away"] != null);
+  const scorers = (d.answers && d.answers.scorers) || [];
+
+  if (!hasResult && !statRows.length) { sec.hidden = true; return; }
   sec.hidden = false;
-  const body = rows.map(([k, label, suf]) => {
-    const h = Number(s[k + "Home"] || 0);
-    const a = Number(s[k + "Away"] || 0);
-    const tot = h + a || 1;
-    return `<div class="stat-line">
-      <div class="stat-nums"><span>${h}${suf}</span><em>${escapeHTML(label)}</em><span>${a}${suf}</span></div>
-      <div class="stat-bar"><span style="width:${((h / tot) * 100).toFixed(0)}%"></span><i style="width:${((a / tot) * 100).toFixed(0)}%"></i></div>
+
+  let html = "";
+  if (hasResult) {
+    const live = liveEnabled && isLive(m) && m.status !== "finished";
+    html += `<div class="res-score">
+      <div class="res-team"><div class="flag">${flagHTML(m.home_flag)}</div><span>${escapeHTML(m.home_team)}</span></div>
+      <div class="res-mid">
+        <div class="res-nums">${d.home_score} <i>×</i> ${d.away_score}</div>
+        <span class="res-tag ${live ? "live" : ""}">${m.status === "finished" ? "Encerrado" : live ? "Ao vivo" + (s.minute ? " · " + escapeHTML(String(s.minute)) : "") : "Parcial"}</span>
+      </div>
+      <div class="res-team"><div class="flag">${flagHTML(m.away_flag)}</div><span>${escapeHTML(m.away_team)}</span></div>
     </div>`;
-  }).join("");
-  card.innerHTML = `<div class="stat-head"><span>${escapeHTML(m.home_team)}</span><span>${escapeHTML(m.away_team)}</span></div>${body}`;
+    if (scorers.length) {
+      html += `<div class="res-scorers">${icon("ball")}<span>${scorers.map(escapeHTML).join(" · ")}</span></div>`;
+    }
+  }
+
+  if (statRows.length) {
+    html += `<div class="stat-block">` + statRows.map(([k, label, suf, ic]) => {
+      const h = Number(s[k + "Home"] || 0), a = Number(s[k + "Away"] || 0), tot = h + a || 1;
+      return `<div class="stat-line">
+        <div class="stat-nums"><span>${h}${suf}</span><em>${icon(ic)} ${escapeHTML(label)}</em><span>${a}${suf}</span></div>
+        <div class="stat-bar"><span style="width:${((h / tot) * 100).toFixed(0)}%"></span><i style="width:${((a / tot) * 100).toFixed(0)}%"></i></div>
+      </div>`;
+    }).join("") + `</div>`;
+  } else if (hasResult) {
+    html += `<p class="hint-center">Estatísticas detalhadas serão publicadas pela organização.</p>`;
+  }
+  card.innerHTML = html;
 }
 
 /* ---------- perguntas especiais ---------- */
@@ -177,11 +207,14 @@ function renderQuestions(m) {
         <input type="text" inputmode="numeric" id="q_${q.id}" class="score-display q-input" data-qid="${q.id}" data-max="${q.max || 20}" value="0" readonly />
         <button type="button" class="step-btn" data-step="up" data-target="q_${q.id}">+</button>
       </div>`;
+    } else if (q.type === "range") {
+      body = `<div class="q-options" data-qid="${q.id}">${(q.bands || []).map((b) =>
+        `<button type="button" class="q-opt" data-value="${escapeHTML(b.label)}">${escapeHTML(b.label)}</button>`).join("")}</div>`;
     } else {
       body = `<div class="q-options" data-qid="${q.id}">${(q.options || []).map((o) =>
         `<button type="button" class="q-opt" data-value="${escapeHTML(o)}">${escapeHTML(o)}</button>`).join("")}</div>`;
     }
-    const pts = q.type === "players" ? `+${q.points} pts / jogador` : `${q.points} pts`;
+    const pts = q.type === "players" ? `+${RULES_DATA.SPECIAL} pts por jogador` : `+${RULES_DATA.SPECIAL} pts`;
     return `<div class="q-card">
       <div class="q-head"><span class="q-label">${escapeHTML(q.label)}</span><span class="q-pts">${pts}</span></div>
       ${body}
@@ -303,15 +336,16 @@ async function renderConfig() {
 async function renderRules() {
   try {
     const r = await api("/api/rules");
+    RULES_DATA = { ...RULES_DATA, ...r };
     $("#tiers").innerHTML = `
       <div class="tier"><div class="tier-pts">${r.EXACT}</div><div class="tier-name">Placar exato</div><p>Cravou o placar certinho? Pontuação máxima.</p></div>
       <div class="tier"><div class="tier-pts">${r.RESULT}</div><div class="tier-name">Resultado certo</div><p>Acertou quem venceu (ou o empate).</p></div>
       <div class="tier"><div class="tier-pts">${r.GOAL_DIFF}</div><div class="tier-name">Saldo de gols</div><p>Acertou a diferença de gols entre as equipes.</p></div>
       <div class="tier"><div class="tier-pts">${r.TEAM_GOALS}</div><div class="tier-name">Gols por equipe</div><p>Por equipe cujo número de gols você acertou.</p></div>
-      <div class="tier"><div class="tier-pts">+</div><div class="tier-name">Perguntas especiais</div><p>Marcadores, gols, faltas, escanteios e mais — cada uma vale pontos.</p></div>`;
+      <div class="tier tier-special"><div class="tier-pts">+${r.SPECIAL}</div><div class="tier-name">Cada pergunta especial</div><p>Marcador, faltas, escanteios, cartões... cada acerto vale ${r.SPECIAL} pts.</p></div>`;
     $("#rulesFoot").innerHTML =
-      `* Placar exato = <strong>${r.EXACT}</strong> · Resultado = <strong>${r.RESULT}</strong> · ` +
-      `Saldo = <strong>${r.GOAL_DIFF}</strong> · Gols por equipe = <strong>${r.TEAM_GOALS}</strong> cada · + perguntas especiais`;
+      `Placar exato <strong>${r.EXACT}</strong> · Resultado <strong>${r.RESULT}</strong> · ` +
+      `Saldo <strong>${r.GOAL_DIFF}</strong> · Gols por equipe <strong>${r.TEAM_GOALS}</strong> · cada pergunta especial <strong>+${r.SPECIAL}</strong>`;
   } catch {}
 }
 
@@ -320,7 +354,9 @@ function setLockNote(m) {
   const note = $("#lockNote");
   if (m.lock_at && m.match_date) {
     const diffMin = Math.round((new Date(m.match_date) - new Date(m.lock_at)) / 60000);
-    note.textContent = diffMin > 0 ? `encerra ${diffMin} min antes do jogo` : "encerra no início do jogo";
+    if (diffMin <= 0) note.textContent = "encerra no início do jogo";
+    else if (diffMin % 60 === 0) note.textContent = `encerra ${diffMin / 60}h antes do jogo`;
+    else note.textContent = `encerra ${diffMin} min antes do jogo`;
   } else note.textContent = "encerra no início do jogo";
 }
 function tickCountdown() {
@@ -392,10 +428,11 @@ async function renderMatch() {
   const m = matches.find((x) => x.id === currentMatch);
   if (!m) return;
 
-  $("#mhTitle").textContent = `${m.home_team} x ${m.away_team}`;
-  $("#mhHomeFlag").innerHTML = flagHTML(m.home_flag);
-  $("#mhAwayFlag").innerHTML = flagHTML(m.away_flag);
-  $("#mhMeta").textContent = [fmtFull(m.match_date), m.venue].filter(Boolean).join(" · ");
+  $("#bHome").textContent = m.home_team.toUpperCase();
+  $("#bAway").textContent = m.away_team.toUpperCase();
+  $("#bHomeFlag").innerHTML = flagHTML(m.home_flag);
+  $("#bAwayFlag").innerHTML = flagHTML(m.away_flag);
+  $("#bMeta").textContent = [fmtFull(m.match_date), m.venue].filter(Boolean).join(" · ");
   $("#homeName").textContent = m.home_team.toUpperCase();
   $("#awayName").textContent = m.away_team.toUpperCase();
   $("#homeFlag").innerHTML = flagHTML(m.home_flag);
@@ -434,15 +471,6 @@ async function renderMatch() {
 /* ---------- ranking ---------- */
 async function renderRanking() {
   const wrap = $("#rankingWrap");
-  const banner = $("#resultBanner");
-  if (currentDetail && currentDetail.home_score !== null && currentDetail.home_score !== undefined) {
-    const officialScorers = (currentDetail.answers && currentDetail.answers.scorers) || [];
-    let txt = `Resultado oficial: ${currentDetail.home_team} ${currentDetail.home_score} x ${currentDetail.away_score} ${currentDetail.away_team}`;
-    if (officialScorers.length) txt += ` · Marcadores: ${officialScorers.join(", ")}`;
-    banner.innerHTML = `${icon("check")}<span>${escapeHTML(txt)}</span>`;
-    banner.hidden = false;
-  } else banner.hidden = true;
-
   if (rankingMode === "match") {
     const preds = (currentDetail && currentDetail.predictions) || [];
     wrap.innerHTML = `<table class="ranking-table">
@@ -485,7 +513,7 @@ $("#palpiteForm").addEventListener("submit", async (e) => {
   const m = matches.find((x) => x.id === currentMatch);
 
   try {
-    await api("/api/predictions", {
+    const data = await api("/api/predictions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -499,7 +527,7 @@ $("#palpiteForm").addEventListener("submit", async (e) => {
         answers: collectAnswers(m),
       }),
     });
-    msg.textContent = "Palpite enviado! Boa sorte.";
+    msg.textContent = data.updated ? "Palpite atualizado com sucesso!" : "Palpite enviado! Boa sorte.";
     msg.classList.add("ok");
     await renderMatch();
     await renderRanking();
