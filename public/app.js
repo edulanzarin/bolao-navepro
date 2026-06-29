@@ -24,6 +24,7 @@ const ICONS = {
 };
 const icon = (n) => ICONS[n] || "";
 let RULES_DATA = { EXACT: 12, RESULT: 5, GOAL_DIFF: 3, TEAM_GOALS: 1, SPECIAL: 2 };
+let lastResultKey = null;
 
 const fmtFull = (iso) => {
   if (!iso) return "A definir";
@@ -51,6 +52,85 @@ function escapeHTML(s) {
   return String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
   );
+}
+
+/* ---------- toasts (feedback dinâmico) ---------- */
+function toast(message, type = "ok", ms = 4000) {
+  let box = document.getElementById("toastBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "toastBox";
+    box.className = "toast-box";
+    document.body.appendChild(box);
+  }
+  const t = document.createElement("div");
+  t.className = `toast toast-${type}`;
+  const ico = type === "ok" ? icon("check") : type === "err"
+    ? '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    : '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  t.innerHTML = `<span class="toast-ic">${ico}</span><span class="toast-txt">${escapeHTML(message)}</span>`;
+  box.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 320); }, ms);
+}
+
+/* ---------- confete (comemoração, sem dependências) ---------- */
+function celebrate() {
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const c = document.createElement("canvas");
+  c.className = "confetti-canvas";
+  document.body.appendChild(c);
+  const ctx = c.getContext("2d");
+  const dpr = window.devicePixelRatio || 1;
+  const resize = () => { c.width = innerWidth * dpr; c.height = innerHeight * dpr; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); };
+  resize();
+  const colors = ["#d2af4e", "#e7c873", "#3f9bff", "#6fb6ff", "#ffffff"];
+  const parts = Array.from({ length: 150 }, () => ({
+    x: innerWidth / 2 + (Math.random() - 0.5) * 120,
+    y: innerHeight / 3,
+    vx: (Math.random() - 0.5) * 15,
+    vy: Math.random() * -17 - 4,
+    g: 0.32 + Math.random() * 0.22,
+    size: 5 + Math.random() * 7,
+    color: colors[(Math.random() * colors.length) | 0],
+    rot: Math.random() * Math.PI,
+    vr: (Math.random() - 0.5) * 0.32,
+  }));
+  const start = performance.now();
+  let raf;
+  function frame(t) {
+    ctx.clearRect(0, 0, innerWidth, innerHeight);
+    const elapsed = t - start;
+    parts.forEach((p) => {
+      p.vy += p.g; p.x += p.vx; p.y += p.vy; p.rot += p.vr;
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, 1 - elapsed / 2600);
+      ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.62);
+      ctx.restore();
+    });
+    if (elapsed < 2600) raf = requestAnimationFrame(frame);
+    else { cancelAnimationFrame(raf); c.remove(); }
+  }
+  raf = requestAnimationFrame(frame);
+}
+
+/* ---------- contagem animada de números ---------- */
+function countUp(el, to, ms = 700) {
+  const target = Number(to) || 0;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    el.textContent = target; return;
+  }
+  const start = performance.now();
+  const from = 0;
+  function step(now) {
+    const p = Math.min(1, (now - start) / ms);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = Math.round(from + (target - from) * eased);
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
 }
 
 function squadOptions() {
@@ -156,13 +236,26 @@ function renderStats(m) {
   let html = "";
   if (hasResult) {
     const live = isLive(m) && m.status !== "finished";
-    html += `<div class="res-score">
-      <div class="res-team"><div class="flag">${flagHTML(m.home_flag)}</div><span>${escapeHTML(m.home_team)}</span></div>
-      <div class="res-mid">
-        <div class="res-nums">${d.home_score} <i>×</i> ${d.away_score}</div>
-        <span class="res-tag ${live ? "live" : ""}">${m.status === "finished" ? "Encerrado" : live ? "Ao vivo" + (s.minute ? " · " + escapeHTML(String(s.minute)) : "") : "Parcial"}</span>
+    const hs = Number(d.home_score) || 0, as = Number(d.away_score) || 0;
+    const homeWin = hs > as, awayWin = as > hs;
+    const tag = m.status === "finished" ? "Encerrado"
+      : live ? "Ao vivo" + (s.minute ? " · " + escapeHTML(String(s.minute)) : "")
+      : "Parcial";
+    html += `<div class="res-score ${live ? "is-live" : ""}">
+      <div class="res-team ${homeWin ? "win" : ""}">
+        <div class="flag">${flagHTML(m.home_flag)}</div>
+        <span class="res-team-name">${escapeHTML(m.home_team)}</span>
+        ${homeWin ? `<span class="res-win-tag">Venceu</span>` : ""}
       </div>
-      <div class="res-team"><div class="flag">${flagHTML(m.away_flag)}</div><span>${escapeHTML(m.away_team)}</span></div>
+      <div class="res-mid">
+        <div class="res-nums"><span class="res-n" data-val="${hs}">${hs}</span><i>×</i><span class="res-n" data-val="${as}">${as}</span></div>
+        <span class="res-tag ${live ? "live" : ""}">${tag}</span>
+      </div>
+      <div class="res-team ${awayWin ? "win" : ""}">
+        <div class="flag">${flagHTML(m.away_flag)}</div>
+        <span class="res-team-name">${escapeHTML(m.away_team)}</span>
+        ${awayWin ? `<span class="res-win-tag">Venceu</span>` : ""}
+      </div>
     </div>`;
     if (scorers.length) {
       html += `<div class="res-scorers">${icon("ball")}<span>${scorers.map(escapeHTML).join(" · ")}</span></div>`;
@@ -181,6 +274,17 @@ function renderStats(m) {
     html += `<p class="hint-center">Estatísticas detalhadas serão publicadas pela organização.</p>`;
   }
   card.innerHTML = html;
+
+  // anima o placar apenas quando o resultado muda
+  if (hasResult) {
+    const key = `${m.id}:${d.home_score}:${d.away_score}`;
+    if (key !== lastResultKey) {
+      lastResultKey = key;
+      card.querySelectorAll(".res-n").forEach((el) => countUp(el, el.dataset.val));
+    }
+  } else {
+    lastResultKey = null;
+  }
 }
 
 /* ---------- perguntas especiais ---------- */
@@ -315,6 +419,20 @@ function setupWizard() {
   document.querySelectorAll("[data-prev]").forEach((btn) =>
     btn.addEventListener("click", () => showStep(wStep - 1))
   );
+
+  // Enter avança no wizard em vez de enviar o palpite
+  $("#palpiteForm").addEventListener("keydown", (e) => {
+    if (e.key !== "Enter") return;
+    const tag = (e.target.tagName || "").toLowerCase();
+    if (tag === "textarea") return;            // permite quebra de linha
+    if (e.target.type === "submit") return;    // botão de envio funciona normal
+    if (wStep < W_TOTAL) {
+      e.preventDefault();                      // bloqueia o submit prematuro
+      if (wStep === 1 && !validateStep1()) return;
+      showStep(wStep + 1);
+    }
+  });
+
   showStep(1);
 }
 
@@ -472,23 +590,34 @@ async function renderRanking() {
     const preds = (currentDetail && currentDetail.predictions) || [];
     wrap.innerHTML = `<table class="ranking-table">
       <thead><tr><th>Pos</th><th>Participante</th><th>Pts</th></tr></thead>
-      <tbody>${preds.length ? preds.map((p, i) => `<tr>
-        <td class="pos">${i + 1}º</td>
+      <tbody>${preds.length ? preds.map((p, i) => `<tr class="rank-row" style="--i:${i}">
+        <td class="pos">${rankPos(i)}</td>
         <td>${escapeHTML(p.participant)}</td>
         <td class="pts">${p.points}</td>
       </tr>`).join("") : `<tr><td colspan="3" class="empty">Ainda sem palpites para este jogo.</td></tr>`}</tbody>
     </table>`;
   } else {
+    wrap.innerHTML = rankingSkeleton();
     const rows = await api("/api/ranking");
     wrap.innerHTML = `<table class="ranking-table">
       <thead><tr><th>Pos</th><th>Participante</th><th>Pts</th></tr></thead>
-      <tbody>${rows.length ? rows.map((r, i) => `<tr>
-        <td class="pos">${i + 1}º</td>
+      <tbody>${rows.length ? rows.map((r, i) => `<tr class="rank-row" style="--i:${i}">
+        <td class="pos">${rankPos(i)}</td>
         <td>${escapeHTML(r.participant)}</td>
         <td class="pts">${r.points ?? 0}</td>
       </tr>`).join("") : `<tr><td colspan="3" class="empty">Nenhum palpite ainda. Seja o primeiro!</td></tr>`}</tbody>
     </table>`;
   }
+}
+
+function rankPos(i) {
+  const medals = ["🥇", "🥈", "🥉"];
+  return i < 3 ? `<span class="rank-medal">${medals[i]}</span>` : `${i + 1}º`;
+}
+
+function rankingSkeleton() {
+  const row = `<tr><td colspan="3"><span class="skel"></span></td></tr>`;
+  return `<table class="ranking-table"><thead><tr><th>Pos</th><th>Participante</th><th>Pts</th></tr></thead><tbody>${row.repeat(5)}</tbody></table>`;
 }
 
 document.querySelectorAll(".seg-btn").forEach((btn) =>
@@ -526,6 +655,8 @@ $("#palpiteForm").addEventListener("submit", async (e) => {
     });
     msg.textContent = data.updated ? "Palpite atualizado com sucesso!" : "Palpite enviado! Boa sorte.";
     msg.classList.add("ok");
+    toast(data.updated ? "Palpite atualizado! 🎯" : "Palpite enviado! Boa sorte 🍀", "ok");
+    celebrate();
     await renderMatch();
     await renderRanking();
     setTimeout(() => {
@@ -538,6 +669,7 @@ $("#palpiteForm").addEventListener("submit", async (e) => {
   } catch (err) {
     msg.textContent = err.message;
     msg.classList.add("err");
+    toast(err.message, "err");
   }
 });
 
@@ -546,6 +678,32 @@ setupWizard();
 renderConfig();
 renderRules();
 loadAll();
+
+/* ---------- animações de entrada ao rolar ---------- */
+(function setupReveal() {
+  if (!("IntersectionObserver" in window)) return;
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach((en) => {
+      if (en.isIntersecting) {
+        en.target.classList.add("in-view");
+        io.unobserve(en.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: "0px 0px -40px 0px" });
+  document.querySelectorAll(".section, .hero").forEach((el) => {
+    el.classList.add("reveal");
+    io.observe(el);
+  });
+})();
+
+/* ---------- header com blur ao rolar ---------- */
+(function setupHeader() {
+  const bar = document.querySelector(".topbar");
+  if (!bar) return;
+  const onScroll = () => bar.classList.toggle("scrolled", window.scrollY > 12);
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+})();
 
 setInterval(tickCountdown, 1000);
 

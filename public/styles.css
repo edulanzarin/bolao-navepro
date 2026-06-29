@@ -681,3 +681,395 @@ h1, h2, h3, .hero-title, .section-title { font-family: "Sora", sans-serif; }
 .admin-grid { gap: 16px 18px; }
 
 .qe-fixed { font-size: 12px; color: var(--gold-soft); font-weight: 700; white-space: nowrap; padding: 0 6px; }
+
+
+/* ============================================================
+   UPGRADE MODERNO · v2  (resultado grande, bandeiras, animações)
+   ============================================================ */
+
+/* ---------- animações de entrada ao rolar ---------- */
+.reveal { opacity: 0; transform: translateY(26px); transition: opacity .6s cubic-bezier(.2,.7,.3,1), transform .6s cubic-bezier(.2,.7,.3,1); }
+.reveal.in-view { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .reveal { opacity: 1 !important; transform: none !important; transition: none; }
+}
+
+/* ---------- PAINEL DE RESULTADO (placar grande) ---------- */
+#statsCard {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(120% 130% at 50% -10%, rgba(63,155,255,0.16), transparent 60%),
+    linear-gradient(180deg, var(--navy-850), var(--navy-900));
+}
+.res-score {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 18px;
+  padding: 34px 20px 30px;
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(130% 120% at 50% 0%, rgba(63,155,255,0.10), transparent 62%),
+    linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.015));
+  border: 1px solid var(--line-strong);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+.res-score::after {
+  content: "";
+  position: absolute; left: 0; right: 0; bottom: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--gold), var(--blue), transparent);
+  opacity: 0.7;
+}
+.res-team {
+  display: flex; flex-direction: column; align-items: center; gap: 12px;
+  position: relative; transition: transform .25s ease;
+}
+.res-team .flag {
+  width: 110px; height: 110px; font-size: 56px;
+  border: 3px solid rgba(255,255,255,0.16);
+  box-shadow: 0 16px 38px rgba(0,0,0,0.5);
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.res-team.win .flag {
+  border-color: var(--gold);
+  box-shadow: 0 0 0 4px rgba(210,175,78,0.18), 0 18px 40px rgba(0,0,0,0.55);
+}
+.res-team:hover .flag { transform: translateY(-3px) scale(1.04); }
+.res-team-name { font-family: "Sora", sans-serif; font-weight: 800; font-size: 16px; letter-spacing: 0.6px; text-align: center; }
+.res-team.win .res-team-name { color: var(--gold-soft); }
+.res-win-tag {
+  font-size: 10px; font-weight: 800; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--navy-950); background: var(--gold); padding: 3px 12px; border-radius: 999px;
+  box-shadow: 0 6px 16px rgba(210,175,78,0.35);
+}
+.res-mid { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+.res-nums {
+  display: flex; align-items: center; gap: 14px;
+  font-family: "Sora", sans-serif; font-weight: 800; line-height: 0.95;
+}
+.res-nums .res-n {
+  font-size: clamp(60px, 13vw, 104px);
+  color: #fff;
+  text-shadow: 0 4px 30px rgba(63,155,255,0.45), 0 2px 8px rgba(0,0,0,0.5);
+  min-width: clamp(48px, 11vw, 90px); text-align: center;
+}
+.res-nums i { color: var(--gold); font-style: normal; font-size: clamp(34px, 7vw, 58px); opacity: 0.9; }
+.res-score.is-live .res-nums .res-n { animation: scoreGlow 2.4s ease-in-out infinite; }
+@keyframes scoreGlow {
+  0%, 100% { text-shadow: 0 4px 30px rgba(63,155,255,0.40), 0 2px 8px rgba(0,0,0,0.5); }
+  50% { text-shadow: 0 4px 44px rgba(63,155,255,0.75), 0 2px 8px rgba(0,0,0,0.5); }
+}
+.res-tag { font-size: 12px; padding: 6px 16px; }
+
+@media (max-width: 600px) {
+  .res-score { gap: 8px; padding: 24px 8px 22px; }
+  .res-team .flag { width: 72px; height: 72px; font-size: 38px; }
+  .res-team-name { font-size: 13px; }
+  .res-nums { gap: 8px; }
+}
+
+/* ---------- BANDEIRAS GERAIS (maiores + brilho) ---------- */
+.flag {
+  width: 76px; height: 76px; font-size: 38px;
+  box-shadow: 0 8px 22px rgba(0,0,0,0.35);
+  transition: transform .2s ease, border-color .2s ease;
+}
+.sb-team .flag:hover { transform: scale(1.05); border-color: var(--gold); }
+
+/* banner do jogo: bandeiras maiores com anel animado */
+.mb-flag {
+  width: 116px; height: 116px; font-size: 58px;
+  border: 3px solid rgba(255,255,255,0.22);
+  position: relative;
+  transition: transform .25s ease;
+}
+.mb-team:hover .mb-flag { transform: translateY(-4px) scale(1.05); }
+.mb-flag::after {
+  content: ""; position: absolute; inset: -7px; border-radius: 50%;
+  border: 1px solid rgba(210,175,78,0.35);
+  animation: ringPulse 3s ease-in-out infinite;
+}
+@keyframes ringPulse {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.06); opacity: 0.9; }
+}
+.mb-team span { font-size: 20px; }
+.mb-vs {
+  font-size: 24px;
+  background: linear-gradient(180deg, #fff, var(--blue-soft));
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+
+@media (max-width: 600px) {
+  .mb-flag { width: 78px; height: 78px; font-size: 40px; }
+  .mb-flag::after { inset: -5px; }
+  .mb-team span { font-size: 15px; }
+}
+
+/* ---------- BOTÕES (brilho + elevação) ---------- */
+.btn-gold, .btn-pill, .hero-cta {
+  position: relative; overflow: hidden;
+}
+.btn-gold::before, .btn-pill::before {
+  content: ""; position: absolute; top: 0; left: -120%; width: 60%; height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255,255,255,0.45), transparent);
+  transform: skewX(-18deg); transition: left .55s ease;
+}
+.btn-gold:hover::before, .btn-pill:hover::before { left: 140%; }
+.btn-gold:hover { box-shadow: 0 12px 30px rgba(210,175,78,0.35); transform: translateY(-2px); }
+.btn-gold:active { transform: translateY(0); }
+
+/* ---------- CARDS (brilho de borda) ---------- */
+.card, .tier, .step {
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+}
+.tier:hover, .step:hover {
+  box-shadow: 0 16px 40px rgba(0,0,0,0.4);
+}
+
+/* ---------- CONTADOR (pop nas unidades) ---------- */
+.cd-unit {
+  transition: transform .2s ease, border-color .2s ease, background .2s ease;
+  background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+}
+.cd-unit:hover { border-color: var(--line-strong); transform: translateY(-2px); }
+.cd-unit strong {
+  background: linear-gradient(180deg, #fff, #c7d6f5);
+  -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
+}
+.countdown.ended .cd-unit strong { -webkit-text-fill-color: var(--muted); }
+
+/* ---------- PERGUNTAS / OPÇÕES (feedback) ---------- */
+.q-opt { transition: border-color .15s ease, background .15s ease, transform .12s ease; }
+.q-opt:hover { transform: translateY(-1px); }
+.q-opt.selected {
+  box-shadow: 0 0 0 1px var(--gold), 0 8px 22px rgba(210,175,78,0.18);
+}
+.q-card { transition: border-color .2s ease; }
+.q-card:hover { border-color: var(--line-strong); }
+
+/* steppers com mais presença */
+.step-btn:hover { box-shadow: 0 6px 16px rgba(210,175,78,0.3); }
+.score-display {
+  background: radial-gradient(120% 120% at 50% 0%, rgba(63,155,255,0.10), var(--navy-950));
+}
+
+/* ---------- RANKING (destaque pódio) ---------- */
+.ranking-table tbody tr { transition: background .15s ease; }
+.ranking-table tbody tr:nth-child(1) .pos { color: var(--gold); }
+.ranking-table tbody tr:nth-child(2) .pos { color: #cbd6ee; }
+.ranking-table tbody tr:nth-child(3) .pos { color: #d8a878; }
+.ranking-table tbody tr:nth-child(-n+3) td { background: rgba(210,175,78,0.04); }
+.ranking-table tbody tr:nth-child(-n+3):hover td { background: rgba(210,175,78,0.08); }
+
+/* ---------- ESTATÍSTICAS (barra animada) ---------- */
+.stat-bar span, .stat-bar i { transition: width .8s cubic-bezier(.2,.7,.3,1); }
+.stat-line { animation: fadeStep .4s ease both; }
+
+/* ---------- HERO (troféu flutuante) ---------- */
+.fifa-trophy { animation: floatY 5s ease-in-out infinite; }
+@keyframes floatY { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-12px); } }
+.art-glow { animation: glowPulse 5s ease-in-out infinite; }
+@keyframes glowPulse { 0%, 100% { opacity: 0.8; transform: scale(1); } 50% { opacity: 1; transform: scale(1.05); } }
+@media (prefers-reduced-motion: reduce) {
+  .fifa-trophy, .art-glow, .mb-flag::after, .res-score.is-live .res-nums .res-n { animation: none; }
+}
+
+
+/* ============================================================
+   UPGRADE DINÂMICO · v3  (toasts, confete, header, skeleton, pódio)
+   ============================================================ */
+
+/* ---------- HEADER STICKY COM BLUR ---------- */
+.topbar {
+  position: sticky; top: 0; z-index: 50;
+  transition: background .3s ease, box-shadow .3s ease, backdrop-filter .3s ease, padding .3s ease;
+  border-bottom: 1px solid transparent;
+}
+.topbar.scrolled {
+  background: rgba(7, 17, 43, 0.72);
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+  border-bottom-color: var(--line);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+  padding-top: 12px; padding-bottom: 12px;
+}
+
+/* ---------- TOASTS ---------- */
+.toast-box {
+  position: fixed; top: 18px; right: 18px; z-index: 1000;
+  display: flex; flex-direction: column; gap: 10px; pointer-events: none;
+  max-width: min(360px, calc(100vw - 36px));
+}
+.toast {
+  display: flex; align-items: center; gap: 11px;
+  padding: 13px 16px; border-radius: 13px;
+  background: linear-gradient(180deg, var(--navy-800), var(--navy-900));
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+  color: var(--text); font-size: 14px; font-weight: 600;
+  transform: translateX(120%); opacity: 0;
+  transition: transform .35s cubic-bezier(.2,.8,.2,1), opacity .35s ease;
+}
+.toast.show { transform: translateX(0); opacity: 1; }
+.toast-ic { display: inline-flex; flex: none; }
+.toast-ic .ic { width: 20px; height: 20px; }
+.toast-txt { line-height: 1.35; }
+.toast-ok { border-color: rgba(126,226,163,0.4); }
+.toast-ok .toast-ic { color: #7ee2a3; }
+.toast-err { border-color: rgba(251,113,133,0.45); }
+.toast-err .toast-ic { color: #fb7185; }
+.toast-info .toast-ic { color: var(--blue-soft); }
+@media (max-width: 520px) {
+  .toast-box { top: auto; bottom: 16px; right: 12px; left: 12px; max-width: none; }
+  .toast { transform: translateY(120%); }
+  .toast.show { transform: translateY(0); }
+}
+
+/* ---------- CONFETE ---------- */
+.confetti-canvas {
+  position: fixed; inset: 0; width: 100vw; height: 100vh;
+  pointer-events: none; z-index: 999;
+}
+
+/* ---------- SKELETON LOADER ---------- */
+.skel {
+  display: block; height: 16px; border-radius: 7px;
+  background: linear-gradient(90deg, rgba(255,255,255,0.05) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.05) 63%);
+  background-size: 400% 100%;
+  animation: shimmer 1.3s ease-in-out infinite;
+}
+@keyframes shimmer { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+/* ---------- RANKING: pódio + entrada escalonada ---------- */
+.rank-medal { font-size: 20px; line-height: 1; }
+.rank-row { animation: rankIn .45s cubic-bezier(.2,.7,.3,1) both; animation-delay: calc(var(--i, 0) * 45ms); }
+@keyframes rankIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
+.ranking-table .pts {
+  font-family: "Sora", sans-serif; font-size: 16px;
+}
+.ranking-table tbody tr:first-child .pts { color: var(--gold-soft); }
+
+/* ---------- LIVE DOT no toolbar ---------- */
+.live-dot {
+  background: rgba(126,226,163,0.10); border: 1px solid rgba(126,226,163,0.3);
+  padding: 5px 12px; border-radius: 999px;
+}
+
+/* ---------- WIZARD: progresso com brilho ---------- */
+.wp-seg.active { box-shadow: 0 0 12px rgba(210,175,78,0.5); }
+.wp-seg { position: relative; overflow: hidden; }
+
+/* ---------- SCOREBOARD (passo 2) mais dinâmico ---------- */
+.scoreboard {
+  background:
+    radial-gradient(100% 120% at 50% 0%, rgba(63,155,255,0.08), transparent 60%),
+    rgba(255,255,255,0.025);
+}
+.sb-stepper.bump .score-display {
+  transform: scale(1.12);
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(210,175,78,0.22);
+}
+
+/* ---------- CHIPS animados ---------- */
+.chip { animation: chipPop .25s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes chipPop { from { opacity: 0; transform: scale(.7); } to { opacity: 1; transform: scale(1); } }
+
+/* ---------- PRIZES (hover dinâmico) ---------- */
+.prize { transition: transform .2s ease, border-color .2s ease, background .2s ease; }
+.prize:hover { transform: translateX(4px); }
+.prize .medal { transition: transform .2s ease; }
+.prize:hover .medal { transform: rotate(-10deg) scale(1.12); }
+
+/* ---------- foco acessível mais visível ---------- */
+:focus-visible { outline: 2px solid var(--blue-soft); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rank-row, .chip, .skel, .toast { animation: none; }
+}
+
+
+/* ============================================================
+   ADMIN · v4  (espaçamento, dashboard, login moderno)
+   ============================================================ */
+
+/* respiro entre as seções do painel (antes ficavam grudadas) */
+#panel { display: flex; flex-direction: column; gap: 26px; }
+#panel > .card { margin: 0; }
+
+/* ---------- LOGIN ---------- */
+.login-card {
+  max-width: 440px; margin: 56px auto; text-align: center;
+  padding: 38px 32px 32px;
+}
+.login-icon {
+  width: 64px; height: 64px; margin: 0 auto 18px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, rgba(210,175,78,0.25), rgba(210,175,78,0.06));
+  border: 1px solid rgba(210,175,78,0.35);
+}
+.login-icon .ic { width: 28px; height: 28px; color: var(--gold-soft); }
+.login-sub { color: var(--muted); font-size: 14px; margin-bottom: 22px; line-height: 1.55; }
+.login-card .field { text-align: left; }
+.login-card .btn-gold { margin-top: 4px; }
+
+/* ---------- DASHBOARD ---------- */
+.dash-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+}
+.dash-card {
+  position: relative; overflow: hidden;
+  display: flex; flex-direction: column; gap: 5px;
+  padding: 22px 22px 18px; border-radius: var(--radius);
+  background: linear-gradient(180deg, var(--navy-850), var(--navy-900));
+  border: 1px solid var(--line);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.28);
+  transition: transform .25s ease, border-color .25s ease, box-shadow .25s ease;
+  animation: rankIn .5s cubic-bezier(.2,.7,.3,1) both;
+  animation-delay: calc(var(--i, 0) * 70ms);
+}
+.dash-card:hover { transform: translateY(-3px); border-color: var(--line-strong); box-shadow: 0 18px 44px rgba(0,0,0,0.4); }
+.dash-card::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--gold), var(--blue)); opacity: 0.85; }
+.dash-ic { position: absolute; top: 16px; right: 16px; opacity: 0.22; color: var(--gold-soft); }
+.dash-ic .ic { width: 40px; height: 40px; }
+.dash-num { font-family: "Sora", sans-serif; font-size: 42px; font-weight: 800; line-height: 1; color: #fff; }
+.dash-label { font-size: 12px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--blue-soft); }
+.dash-sub { font-size: 12px; color: var(--muted); }
+
+/* ---------- PARTIDAS (cards com mais respiro) ---------- */
+.admin-match {
+  padding: 24px; margin-bottom: 22px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.012));
+  transition: border-color .2s ease;
+}
+.admin-match:last-child { margin-bottom: 0; }
+.admin-match:hover { border-color: var(--line-strong); }
+.admin-match-head { padding-bottom: 16px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.admin-match-head strong { display: inline-flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+.admin-row { gap: 16px; margin-bottom: 12px; }
+.field.mini { margin-bottom: 0; }
+.admin-sub { margin: 16px 0 10px; }
+.block-label { margin-top: 22px; }
+.admin-actions { margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+.admin-preds { margin-top: 20px; }
+
+/* premiação: linhas com mais espaço */
+.prize-edit-row { margin-bottom: 12px; gap: 12px; }
+#prizeEditor { margin-bottom: 4px; }
+.admin-grid { gap: 16px 18px; margin-bottom: 8px; }
+.admin-grid .field { margin-bottom: 0; }
+
+/* badge "jogo atual" alinhada */
+.badge { display: inline-flex; align-items: center; line-height: 1; }
+
+@media (max-width: 600px) {
+  .login-card { margin: 28px auto; padding: 30px 20px; }
+  .dash-num { font-size: 34px; }
+  .admin-match { padding: 18px; }
+}

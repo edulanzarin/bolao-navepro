@@ -16,6 +16,28 @@ function escapeHTML(s) {
   );
 }
 
+/* ---------- toasts ---------- */
+function toast(message, type = "ok", ms = 3800) {
+  let box = document.getElementById("toastBox");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "toastBox";
+    box.className = "toast-box";
+    document.body.appendChild(box);
+  }
+  const t = document.createElement("div");
+  t.className = `toast toast-${type}`;
+  const ico = type === "ok"
+    ? '<svg class="ic" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>'
+    : type === "err"
+    ? '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+    : '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>';
+  t.innerHTML = `<span class="toast-ic">${ico}</span><span class="toast-txt">${escapeHTML(message)}</span>`;
+  box.appendChild(t);
+  requestAnimationFrame(() => t.classList.add("show"));
+  setTimeout(() => { t.classList.remove("show"); setTimeout(() => t.remove(), 320); }, ms);
+}
+
 const toLocalInput = (iso) => (iso ? String(iso).slice(0, 16) : "");
 const toBrasiliaISO = (v) => (v ? v.slice(0, 16) + ":00-03:00" : null);
 
@@ -63,9 +85,10 @@ function enterPanel() {
 $("#loginBtn").addEventListener("click", async () => {
   const pass = $("#adminPass").value.trim();
   const msg = $("#loginMsg"); msg.className = "form-msg";
-  if (await tryLogin(pass)) { sessionStorage.setItem("adminPass", pass); enterPanel(); }
-  else { msg.textContent = "Senha incorreta."; msg.classList.add("err"); }
+  if (await tryLogin(pass)) { sessionStorage.setItem("adminPass", pass); enterPanel(); toast("Bem-vindo ao painel 👋", "ok"); }
+  else { msg.textContent = "Senha incorreta."; msg.classList.add("err"); toast("Senha incorreta.", "err"); }
 });
+$("#adminPass").addEventListener("keydown", (e) => { if (e.key === "Enter") $("#loginBtn").click(); });
 
 /* ----------------------- PREMIAÇÃO ----------------------- */
 function prizeRow(place, prize) {
@@ -96,7 +119,8 @@ $("#saveCfgBtn").addEventListener("click", async () => {
   try {
     await api("/api/admin/config", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ subtitle: $("#cfgSubtitle").value.trim(), prizes }) });
     msg.textContent = "Premiação salva!"; msg.classList.add("ok");
-  } catch (e) { msg.textContent = e.message; msg.classList.add("err"); }
+    toast("Premiação salva!", "ok");
+  } catch (e) { msg.textContent = e.message; msg.classList.add("err"); toast(e.message, "err"); }
 });
 
 /* ----------------------- NOVA PARTIDA ----------------------- */
@@ -113,9 +137,10 @@ $("#createBtn").addEventListener("click", async () => {
       }),
     });
     msg.textContent = "Partida criada! As perguntas padrão já vêm configuradas."; msg.classList.add("ok");
+    toast("Partida criada com sucesso!", "ok");
     ["nHome", "nAway", "nHomeFlag", "nAwayFlag", "nDate", "nLock", "nVenue"].forEach((id) => ($("#" + id).value = ""));
     loadMatches();
-  } catch (e) { msg.textContent = e.message; msg.classList.add("err"); }
+  } catch (e) { msg.textContent = e.message; msg.classList.add("err"); toast(e.message, "err"); }
 });
 
 /* ----------------------- RESULTADO: campos e coleta ----------------------- */
@@ -161,16 +186,76 @@ function answersSummary(questions, answers) {
   }).filter(Boolean).join(" · ");
 }
 
+/* ----------------------- DASHBOARD ----------------------- */
+function renderDashboard(matches, details) {
+  const dash = $("#dashboard");
+  if (!dash) return;
+  const docs = new Set();
+  let totalPreds = 0;
+  details.forEach((d) => {
+    (d.predictions || []).forEach((p) => { totalPreds++; if (p.document) docs.add(p.document); });
+  });
+  const finished = matches.filter((m) => m.status === "finished").length;
+  const open = matches.filter((m) => m.status === "open").length;
+  const current = matches.find((m) => m.current);
+  const cards = [
+    { label: "Partidas", value: matches.length, sub: `${open} aberta${open === 1 ? "" : "s"}`, ic: "ball" },
+    { label: "Palpites recebidos", value: totalPreds, sub: "no total", ic: "target" },
+    { label: "Participantes", value: docs.size, sub: "CPF/CNPJ únicos", ic: "user" },
+    { label: "Encerradas", value: finished, sub: current ? `atual: ${current.home_team} x ${current.away_team}` : "—", ic: "flag" },
+  ];
+  dash.innerHTML = cards.map((c, i) => `
+    <div class="dash-card" style="--i:${i}">
+      <span class="dash-ic">${DASH_ICONS[c.ic] || ""}</span>
+      <strong class="dash-num" data-val="${c.value}">0</strong>
+      <span class="dash-label">${escapeHTML(c.label)}</span>
+      <small class="dash-sub">${escapeHTML(c.sub)}</small>
+    </div>`).join("");
+  dash.querySelectorAll(".dash-num").forEach((el) => dashCount(el, el.dataset.val));
+}
+
+const DASH_ICONS = {
+  ball: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m12 7 3.1 2.3-1.2 3.7h-3.8L8.9 9.3 12 7Z"/></svg>',
+  target: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></svg>',
+  user: '<svg class="ic" viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>',
+  flag: '<svg class="ic" viewBox="0 0 24 24"><path d="M4 22V3"/><path d="M4 4h13l-2.2 4L17 12H4"/></svg>',
+};
+
+function dashCount(el, to, ms = 750) {
+  const target = Number(to) || 0;
+  if (window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches) { el.textContent = target; return; }
+  const start = performance.now();
+  function step(now) {
+    const p = Math.min(1, (now - start) / ms);
+    el.textContent = Math.round(target * (1 - Math.pow(1 - p, 3)));
+    if (p < 1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function matchSkeleton() {
+  const card = `<div class="admin-match"><span class="skel" style="width:40%;height:20px;margin-bottom:14px;"></span><span class="skel" style="height:40px;margin-bottom:10px;"></span><span class="skel" style="width:70%;height:40px;"></span></div>`;
+  return card.repeat(2);
+}
+
 /* ----------------------- LISTA DE PARTIDAS ----------------------- */
 async function loadMatches() {
-  const matches = await fetch("/api/matches").then((r) => r.json());
   const box = $("#adminMatches");
-  if (!matches.length) { box.innerHTML = `<p class="empty">Nenhuma partida cadastrada.</p>`; return; }
+  box.innerHTML = matchSkeleton();
+  const matches = await fetch("/api/matches").then((r) => r.json());
+  if (!matches.length) {
+    $("#dashboard").innerHTML = "";
+    box.innerHTML = `<p class="empty">Nenhuma partida cadastrada.</p>`;
+    return;
+  }
+
+  const details = await Promise.all(matches.map((m) => api(`/api/admin/matches/${m.id}`)));
+  matches.forEach((m, i) => { MQ[m.id] = details[i].questions || []; });
+  renderDashboard(matches, details);
 
   box.innerHTML = "";
-  for (const m of matches) {
-    const detail = await api(`/api/admin/matches/${m.id}`);
-    MQ[m.id] = detail.questions || [];
+  matches.forEach((m, i) => {
+    const detail = details[i];
     const card = document.createElement("div");
     card.className = "admin-match";
 
@@ -238,7 +323,7 @@ async function loadMatches() {
       </details>
     `;
     box.appendChild(card);
-  }
+  });
 
   box.querySelectorAll("button[data-act]").forEach((btn) =>
     btn.addEventListener("click", () => handleAction(btn.dataset.act, btn.dataset.id))
@@ -248,6 +333,14 @@ async function loadMatches() {
 function statusLabel(s) { return { open: "Aberto", locked: "Travado", finished: "Encerrado" }[s] || s; }
 
 async function handleAction(act, id) {
+  const okMsg = {
+    savemeta: "Dados da partida salvos.",
+    "save-result": "Resultado salvo e pontuação recalculada.",
+    finish: "Jogo encerrado e publicado.",
+    reopen: "Jogo reaberto.",
+    delete: "Partida excluída.",
+    delpred: "Palpite excluído.",
+  };
   try {
     if (act === "export") { await downloadCsv(`/api/admin/export/matches/${id}`, `palpites-jogo-${id}.csv`); return; }
     if (act === "savemeta") {
@@ -257,7 +350,7 @@ async function handleAction(act, id) {
       });
     } else if (act === "save-result" || act === "finish") {
       const h = $("#rh-" + id).value, a = $("#ra-" + id).value;
-      if (h === "" || a === "") { alert("Informe o placar oficial (gols dos dois times)."); return; }
+      if (h === "" || a === "") { toast("Informe o placar oficial (gols dos dois times).", "err"); return; }
       await api(`/api/admin/matches/${id}/result`, {
         method: "PUT", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ homeScore: h, awayScore: a, answers: gatherAnswers(id), stats: gatherStats(id), finish: act === "finish" }),
@@ -271,8 +364,9 @@ async function handleAction(act, id) {
       if (!confirm("Excluir este palpite?")) return;
       await api(`/api/admin/predictions/${id}`, { method: "DELETE" });
     }
+    if (okMsg[act]) toast(okMsg[act], "ok");
     loadMatches();
-  } catch (e) { alert("Erro: " + e.message); }
+  } catch (e) { toast("Erro: " + e.message, "err"); }
 }
 
 if (PASS) tryLogin(PASS).then((ok) => { if (ok) enterPanel(); });
