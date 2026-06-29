@@ -1,7 +1,7 @@
 {
-  "name": "bolao-navepro",
+  "name": "bolao-navecon",
   "version": "1.0.0",
-  "description": "Bolão de palpites NAVEPRO — placar, perguntas especiais e ranking acumulado",
+  "description": "Bolão de palpites NAVECON — placar, perguntas especiais e ranking acumulado",
   "main": "server.js",
   "type": "module",
   "scripts": {

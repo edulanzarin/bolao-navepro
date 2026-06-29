@@ -74,7 +74,7 @@ db.exec(`
 
 /* ---- Configurações (premiação etc.) ---- */
 const DEFAULT_SETTINGS = {
-  subtitle: "Acerte o placar, crave os detalhes e suba no ranking. Premiação exclusiva NAVEPRO.",
+  subtitle: "Acerte o placar, crave os detalhes e suba no ranking. Premiação exclusiva NAVECON.",
   prizes: [
     { place: 1, prize: "Voucher R$ 300" },
     { place: 2, prize: "Voucher R$ 200" },

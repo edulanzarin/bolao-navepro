@@ -10,7 +10,7 @@ import { liveEnabled, liveProvider, fetchFixture } from "./live.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const PORT = process.env.PORT || 3000;
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "navepro2026";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "navecon2026";
 
 const app = express();
 app.use(express.json());
@@ -480,5 +480,5 @@ if (liveEnabled()) {
 }
 
 app.listen(PORT, () => {
-  console.log(`Bolão NAVEPRO rodando em http://localhost:${PORT}`);
+  console.log(`Bolão NAVECON rodando em http://localhost:${PORT}`);
 });

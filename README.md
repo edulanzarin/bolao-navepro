@@ -1,4 +1,4 @@
-# Bolão NAVEPRO
+# Bolão NAVECON
 
 Aplicação de bolão de palpites para a Copa 2026. Os participantes cravam o placar e respondem perguntas especiais (marcadores, faltas, escanteios, cartões); a pontuação é por proximidade e o ranking acumula entre as partidas.
 
@@ -40,7 +40,7 @@ O banco SQLite fica no volume `bolao-data` (`/app/data/bolao.db`) e persiste ent
 | Variável | Padrão | Descrição |
 |---|---|---|
 | `PORT` | `3000` | Porta HTTP da aplicação |
-| `ADMIN_PASSWORD` | `navepro2026` | Senha do painel do organizador |
+| `ADMIN_PASSWORD` | `navecon2026` | Senha do painel do organizador |
 | `DATA_DIR` | `/app/data` | Diretório do banco SQLite |
 | `TZ` | `America/Sao_Paulo` | Fuso usado nos prazos |
 | `API_FOOTBALL_KEY` | — | (Opcional) Chave do API-Football para placar/estatísticas ao vivo. Sem ela, o resultado é lançado manualmente. |
@@ -65,7 +65,7 @@ docker compose cp bolao:/app/data/bolao.db ./backup-bolao.db
 ## Estrutura
 
 ```
-bolao-navepro/
+bolao-navecon/
 ├── server.js            # API HTTP
 ├── db.js                # schema e conexão SQLite
 ├── scoring.js           # cálculo de pontuação
